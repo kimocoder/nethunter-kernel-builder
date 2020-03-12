@@ -105,7 +105,7 @@ MODULES_OUT=$BUILD_DIR/modules_out
 UPLOAD_DIR=$BUILD_DIR/output/
 
 # Package dependencies
-PKG_DEPEND="axel bc build-essential curl pandoc libncurses5-dev lynx fakeroot unxz whiptail"
+PKG_DEPEND="axel bc build-essential curl pandoc libncurses5-dev lynx fakeroot xz-utils whiptail"
 
 ####################################################################
 # Overwrite any of the above settings with this local config file: #

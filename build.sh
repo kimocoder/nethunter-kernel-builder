@@ -227,7 +227,10 @@ function verify_sha256 {
 function get_dependencies() {
         info "Installing dependencies"
         sudo apt-get update
-        sudo apt-get install $PKG_DEPEND
+	for i in $PKG_DEPEND;
+	do
+                sudo apt-get install -y $i
+        done
 }
 
 # Download toolchain; required arguments: "source URL" "Download type(wget/git)" 
