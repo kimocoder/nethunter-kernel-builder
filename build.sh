@@ -342,9 +342,51 @@ function setup_env() {
 	get_toolchains
 }
 
+# Check if $CONFIG exists and create it if not
+function get_defconfig() {
+	local defconfig
+	local confdir=${KDIR}/arch/$ARCH/configs
+	printf "\n"
+        if [ ! -f ${confdir}/${CONFIG} ]; then
+		warning "${CONFIG} not found, creating."
+		select_defconfig
+		return $?
+	fi
+        return 0
+}
+
+# Select defconfig file
+function select_defconfig() {
+        local IFS opt options f i
+	local confdir=${KDIR}/arch/$ARCH/configs
+	info "Please select the configuration you would like to use as basis"
+	printf "\n"
+        cd $confdir
+        while IFS= read -r -d $'\0' f; do
+                options[i++]="$f"
+        done < <(find * -type f -print0 )
+
+        select opt in "${options[@]}" "Cancel"; do
+                case $opt in
+                        "Cancel")
+			    cd -
+                            return 1
+                            ;;
+                        *)
+			    cd -
+			    break
+                            ;;
+                esac
+        done
+	info "Using ${opt} as new ${CONFIG}"
+	cp ${confdir}/${opt} ${confdir}/${CONFIG}
+	return 0
+}
+
 # Edit .config in working directory
 function edit_config() {
 	printf "\n"
+        get_defconfig || return 1
 	if ask "Edit the kernel config?" "Y"; then
 		info "Creating custom  config" 
 	        make -C $KDIR O="$KERNEL_OUT" CC=clang $CONFIG menuconfig
@@ -359,6 +401,7 @@ function edit_config() {
 function make_config() {
 	local tmpdir=/tmp/nethunter-kernel
 	local confdir=${KDIR}/arch/$ARCH/configs
+        get_defconfig || return 1
 	printf "\n"
 	info "Editing $CONFIG"
 	if [ -d ${tmpdir} ]; then
@@ -590,8 +633,7 @@ read_choice(){
 		   clear
 		   make_oclean
 		   setup_dirs
-		   edit_config
-		   make_kernel
+		   edit_config && make_kernel
 		   ;;
 		3)
 		   clear
