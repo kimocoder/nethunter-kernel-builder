@@ -408,7 +408,7 @@ function make_config() {
 		rm -rf ${tmpdit}
 	fi
 	mkdir -p ${tmpdir}
-	make -C $KDIR O="${tmpdir}" CC=clang $CONFIG menuconfig
+	make -C $KDIR O="${tmpdir}" $CONFIG menuconfig
 	if ask "Replace existing $CONFIG with this one?"; then
 		cp -f ${confdir}/$CONFIG ${confdir}/$CONFIG.old
 		cp -f ${tmpdir}/.config ${confdir}/$CONFIG
@@ -418,6 +418,14 @@ function make_config() {
 		info "Config saved as $CONFIG.new"
 	fi
 	pause
+}
+
+# copy version file across
+function copy_version() {
+	if [ -f ${SRC_VERSION} ]; then
+		cp -f ${SRC_VERSION} ${TARGET_VERSION}
+	fi
+	return 0
 }
 
 # Compile the kernel
@@ -432,12 +440,17 @@ function make_kernel() {
 	info "~~~~~~~~~~~~~~~~~~"
 	info " Building kernel"
 	info "~~~~~~~~~~~~~~~~~~"
-	time make -C $KDIR O="$KERNEL_OUT" CC=clang -j "$THREADS"
-	time make -C $KDIR O="$KERNEL_OUT" CC=clang -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+	copy_version
+	time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS"
+	time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
 	rm -f ${MODULES_OUT}/lib/modules/*${LOCALVERSION}/source
 	rm -f ${MODULES_OUT}/lib/modules/*${LOCALVERSION}/build
 	success "Kernel build completed"
-	pause
+	if ask "Save .config as $CONFIG?"; then
+		cp -f ${confdir}/$CONFIG ${confdir}/$CONFIG.old
+		cp -f ${tmpdir}/.config ${confdir}/$CONFIG
+		info "Done. Old config backed up as $CONFIG.old"
+	fi
 }
 
 # Generate the NetHunter kernel zip - to be extracted in the devices folder of the nethunter-installer
