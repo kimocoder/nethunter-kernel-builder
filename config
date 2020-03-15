@@ -109,6 +109,9 @@ MODULES_OUT=$BUILD_DIR/modules_out
 # Destination Path for uploading kernel zip
 UPLOAD_DIR=$BUILD_DIR/output/
 
+# Directory containing the kernel patches 
+PATCH_DIR="$BUILD_DIR/patches"
+
 # Package dependencies
 PKG_DEPEND="axel bc build-essential curl device-tree-compiler pandoc libncurses5-dev lynx fakeroot xz-utils whiptail"
 

@@ -428,6 +428,101 @@ function copy_version() {
 	return 0
 }
 
+function apply_patch() {
+	local ret=1
+	printf "\n"
+	info "Testing $1\n"
+        patch -d${KDIR} -p1 --dry-run < $1
+	if [ $? == 0 ]; then
+		printf "\n"
+		if ask "The test run was completed successfully, apply the patch?" "Y"; then
+			patch -d${KDIR} -p1 < $1
+			ret=$?
+		else
+			ret=1
+		fi
+	else
+		printf "\n"
+		if ask "Warning: The test run completed with errors, apply the patch anyway?" "N"; then
+			patch -d${KDIR} -p1 < $1
+			ret=$?
+		else
+			ret=1
+		fi
+	fi	
+	printf "\n"
+        pause
+        return $ret
+}
+
+# Show all patches in the current directory
+function show_patches() {
+	clear
+	local IFS opt f i
+	unset options
+	printf "${lblue} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n${reset}"
+	printf "${lblue} Please choose the patch to apply\n${reset}"
+	printf "${lblue} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n${reset}"
+	printf "\n"
+        while IFS= read -r -d $'\0' f; do
+                options[i++]="$f"
+        done < <(find * -type f -print0 )
+}
+
+# Select a patch
+function select_patch() {
+	COLUMNS=12
+        select opt in "${options[@]}" "Cancel"; do
+                case $opt in
+                        "Cancel")
+			    cd -
+                            return 1
+                            ;;
+                        *)
+			    apply_patch $opt 
+			    return 0
+                            ;;
+                esac
+        done
+}
+
+# Select kernel patch
+function patch_kernel() {
+	COLUMNS=12
+        local IFS opt options f i pd
+	printf "${lblue} ~~~~~~~~~~~~~~~~~~~~~~~~~~\n${reset}"
+	printf "${lblue} Please choose the patch\n${reset}"
+	printf "${lblue} directory closest matching\n${reset}"
+	printf "${lblue} your kernel version\n${reset}"
+	printf "${lblue} ~~~~~~~~~~~~~~~~~~~~~~~~~~\n${reset}"
+	printf "\n"
+        cd $PATCH_DIR
+        while IFS= read -r -d $'\0' f; do
+                options[i++]="$f"
+        done < <(find * -type d -print0 )
+        select opt in "${options[@]}" "Cancel"; do
+                case $opt in
+                        "Cancel")
+			    cd -
+                            return 1
+                            ;;
+                        *)
+			    cd $opt 
+			    while true
+	 			do
+				    	clear
+					show_patches
+					select_patch || return 0
+			        done
+			    break
+                            ;;
+                esac
+        done
+
+	pause
+	return 0
+}
+
 # Compile the kernel
 function make_kernel() {
 	local confdir=${KDIR}/arch/$ARCH/configs
@@ -612,11 +707,12 @@ show_menu() {
 	printf "\t1. Edit default kernel config\n"
 	printf "\t2. Configure & compile kernel from scratch\n"
 	printf "\t3. Configure & recompile kernel from previous run\n"
-	printf "\t4. Create NetHunter zip\n"
-	printf "\t5. Create Anykernel zip\n"
-	printf "\t6. Generate Changelog\n"
-	printf "\t7. Edit Anykernel config\n"
- 	printf "\t8. Clean Environment\n"
+	printf "\t4. Apply NetHunter kernel patches\n"
+	printf "\t5. Create NetHunter zip\n"
+	printf "\t6. Create Anykernel zip\n"
+	printf "\t7. Generate Changelog\n"
+	printf "\t8. Edit Anykernel config\n"
+ 	printf "\t0. Clean Environment\n"
 	printf "\n"
 	printf "\t---------------------------------------------------\n"
 	printf "\t                     OTHER\n"
@@ -659,23 +755,27 @@ read_choice(){
 		   ;;
 		4)
 		   clear
+		   patch_kernel
+		   ;;
+		5)
+		   clear
 		   make_nhclean
 		   make_nhkernel_zip
 		   ;;
-		5)
+		6)
 		   clear
 		   make_aclean
 		   make_anykernel_zip
 		   ;;
-		6)
+		7)
 		   clear
 		   make_clog
 		   ;;
-		7)
+		8)
 		   clear
 		   $EDIT ${ANYKERNEL_DIR}/anykernel.sh
 		   ;;
-		8)
+		0)
 		   clear
 		   make_fclean
 		   ;;
