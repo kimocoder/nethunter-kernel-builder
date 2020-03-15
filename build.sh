@@ -652,6 +652,7 @@ function make_clog() {
 function make_nethunter() {
 	printf "\n"
 	make_oclean
+	make_nhclean
 	setup_dirs
 	edit_config
 	make_kernel
@@ -662,6 +663,7 @@ function make_nethunter() {
 function make_test() {
 	printf "\n"
 	make_oclean
+	make_aclean
 	setup_dirs
 	edit_config
 	make_kernel
