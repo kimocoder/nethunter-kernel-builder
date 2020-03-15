@@ -430,6 +430,7 @@ function copy_version() {
 
 # Compile the kernel
 function make_kernel() {
+	local confdir=${KDIR}/arch/$ARCH/configs
 	printf "\n"
 	if [ ! "$cfg_done" = true ]; then
 		if ask "Edit the kernel config?" "Y"; then
@@ -443,12 +444,12 @@ function make_kernel() {
 	copy_version
 	time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS"
 	time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
-	rm -f ${MODULES_OUT}/lib/modules/*${LOCALVERSION}/source
-	rm -f ${MODULES_OUT}/lib/modules/*${LOCALVERSION}/build
+	rm -f ${MODULES_OUT}/lib/modules/*/source
+	rm -f ${MODULES_OUT}/lib/modules/*/build
 	success "Kernel build completed"
 	if ask "Save .config as $CONFIG?"; then
 		cp -f ${confdir}/$CONFIG ${confdir}/$CONFIG.old
-		cp -f ${tmpdir}/.config ${confdir}/$CONFIG
+		cp -f ${KERNEL_OUT}/.config ${confdir}/$CONFIG
 		info "Done. Old config backed up as $CONFIG.old"
 	fi
 }
