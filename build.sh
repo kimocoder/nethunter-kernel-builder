@@ -422,7 +422,7 @@ function make_config() {
 
 # copy version file across
 function copy_version() {
-	if [ -f ${SRC_VERSION} ]; then
+	if [ ! -z ${SRC_VERSION} ] && [ ! -z ${TARGET_VERSION} ] && [ -f ${SRC_VERSION} ]; then
 		cp -f ${SRC_VERSION} ${TARGET_VERSION}
 	fi
 	return 0
@@ -537,8 +537,14 @@ function make_kernel() {
 	info " Building kernel"
 	info "~~~~~~~~~~~~~~~~~~"
 	copy_version
-	time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS"
-	time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+        # CC=clang cannot be exported. Let's compile with clang if "CC" is set to "clang" in the config
+	if [ $CC == "clang" ]; then
+	        time make -C $KDIR O="$KERNEL_OUT" CC=clang -j "$THREADS"
+		time make -C $KDIR O="$KERNEL_OUT" CC=clang -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+	else
+	        time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS"
+		time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+	fi
 	rm -f ${MODULES_OUT}/lib/modules/*/source
 	rm -f ${MODULES_OUT}/lib/modules/*/build
 	success "Kernel build completed"
