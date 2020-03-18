@@ -385,30 +385,40 @@ function select_defconfig() {
 
 # Edit .config in working directory
 function edit_config() {
+	local cc
 	printf "\n"
+        # CC=clang cannot be exported. Let's compile with clang if "CC" is set to "clang" in the config
+	if [ "$CC" == "clang" ]; then
+		cc="CC=clang"
+	fi
         get_defconfig || return 1
 	if ask "Edit the kernel config?" "Y"; then
 		info "Creating custom  config" 
-	        make -C $KDIR O="$KERNEL_OUT" CC=clang $CONFIG menuconfig
+	        make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG menuconfig
 	else
 		info "Create config"
-		make -C $KDIR O="$KERNEL_OUT" CC=clang $CONFIG
+		make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG
 	fi
 	cfg_done=true
 }
 
 # Edit defconfig in kernel source directory
 function make_config() {
+	local cc
 	local tmpdir=/tmp/nethunter-kernel
 	local confdir=${KDIR}/arch/$ARCH/configs
+        # CC=clang cannot be exported. Let's compile with clang if "CC" is set to "clang" in the config
+	if [ "$CC" == "clang" ]; then
+		cc="CC=clang"
+	fi
         get_defconfig || return 1
 	printf "\n"
 	info "Editing $CONFIG"
 	if [ -d ${tmpdir} ]; then
-		rm -rf ${tmpdit}
+		rm -rf ${tmpdir}
 	fi
 	mkdir -p ${tmpdir}
-	make -C $KDIR O="${tmpdir}" $CONFIG menuconfig
+	make -C $KDIR O="${tmpdir}" $cc $CONFIG menuconfig
 	if ask "Replace existing $CONFIG with this one?"; then
 		cp -f ${confdir}/$CONFIG ${confdir}/$CONFIG.old
 		cp -f ${tmpdir}/.config ${confdir}/$CONFIG
@@ -525,26 +535,25 @@ function patch_kernel() {
 
 # Compile the kernel
 function make_kernel() {
+	local cc
 	local confdir=${KDIR}/arch/$ARCH/configs
 	printf "\n"
+        # CC=clang cannot be exported. Let's compile with clang if "CC" is set to "clang" in the config
+	if [ "$CC" == "clang" ]; then
+		cc="CC=clang"
+	fi
 	if [ ! "$cfg_done" = true ]; then
 		if ask "Edit the kernel config?" "Y"; then
 			info "Creating custom  config" 
-	  	      	make -C $KDIR O="$KERNEL_OUT" CC=clang $CONFIG menuconfig
+	  	      	make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG menuconfig
 		fi
 	fi
 	info "~~~~~~~~~~~~~~~~~~"
 	info " Building kernel"
 	info "~~~~~~~~~~~~~~~~~~"
 	copy_version
-        # CC=clang cannot be exported. Let's compile with clang if "CC" is set to "clang" in the config
-	if [ $CC == "clang" ]; then
-	        time make -C $KDIR O="$KERNEL_OUT" CC=clang -j "$THREADS"
-		time make -C $KDIR O="$KERNEL_OUT" CC=clang -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
-	else
-	        time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS"
-		time make -C $KDIR O="$KERNEL_OUT" -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
-	fi
+	time make -C $KDIR O="$KERNEL_OUT" $cc  -j "$THREADS"
+	time make -C $KDIR O="$KERNEL_OUT" $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
 	rm -f ${MODULES_OUT}/lib/modules/*/source
 	rm -f ${MODULES_OUT}/lib/modules/*/build
 	success "Kernel build completed"
