@@ -116,6 +116,9 @@ PATCH_DIR="$BUILD_DIR/patches"
 # Package dependencies
 PKG_DEPEND="axel bc build-essential curl device-tree-compiler pandoc libncurses5-dev lynx fakeroot xz-utils whiptail"
 
+# Preferred target for make [menu|n]config - "menuconfig" is default but "nconfig" can be used if keymappings are off
+CONFIG_TOOL=menuconfig
+
 ####################################################################
 # Overwrite any of the above settings with this local config file: #
 LOCAL_CONFIG=local.config

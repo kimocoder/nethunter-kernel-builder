@@ -394,7 +394,7 @@ function edit_config() {
         get_defconfig || return 1
 	if ask "Edit the kernel config?" "Y"; then
 		info "Creating custom  config" 
-	        make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG menuconfig
+	        make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG $CONFIG_TOOL
 	else
 		info "Create config"
 		make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG
@@ -418,7 +418,7 @@ function make_config() {
 		rm -rf ${tmpdir}
 	fi
 	mkdir -p ${tmpdir}
-	make -C $KDIR O="${tmpdir}" $cc $CONFIG menuconfig
+	make -C $KDIR O="${tmpdir}" $cc $CONFIG $CONFIG_TOOL
 	if ask "Replace existing $CONFIG with this one?"; then
 		cp -f ${confdir}/$CONFIG ${confdir}/$CONFIG.old
 		cp -f ${tmpdir}/.config ${confdir}/$CONFIG
@@ -545,7 +545,7 @@ function make_kernel() {
 	if [ ! "$cfg_done" = true ]; then
 		if ask "Edit the kernel config?" "Y"; then
 			info "Creating custom  config" 
-	  	      	make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG menuconfig
+			make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG $CONFIG_TOOL 
 		fi
 	fi
 	info "~~~~~~~~~~~~~~~~~~"
