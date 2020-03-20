@@ -1,0 +1,35 @@
+From 9d33001cf6fd51a6f0b8c4cd1c81ee2bcd567b8f Mon Sep 17 00:00:00 2001
+From: Johannes Berg <johannes.berg@intel.com>
+Date: Fri, 28 Aug 2015 10:52:53 +0200
+Subject: [PATCH 22/30] mac80211: fix driver RSSI event calculations
+
+commit 8ec6d97871f37e4743678ea4a455bd59580aa0f4 upstream.
+
+The ifmgd->ave_beacon_signal value cannot be taken as is for
+comparisons, it must be divided by since it's represented
+like that for better accuracy of the EWMA calculations. This
+would lead to invalid driver RSSI events. Fix the used value.
+
+Fixes: 615f7b9bb1f8 ("mac80211: add driver RSSI threshold events")
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ net/mac80211/mlme.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
+index e606e4a113e..952cb336d70 100644
+--- a/net/mac80211/mlme.c
++++ b/net/mac80211/mlme.c
+@@ -3074,7 +3074,7 @@ ieee80211_rx_mgmt_beacon(struct ieee80211_sub_if_data *sdata,
+ 
+ 	if (ifmgd->rssi_min_thold != ifmgd->rssi_max_thold &&
+ 	    ifmgd->count_beacon_signal >= IEEE80211_SIGNAL_AVE_MIN_COUNT) {
+-		int sig = ifmgd->ave_beacon_signal;
++		int sig = ifmgd->ave_beacon_signal / 16;
+ 		int last_sig = ifmgd->last_ave_beacon_signal;
+ 
+ 		/*
+-- 
+2.25.1
+

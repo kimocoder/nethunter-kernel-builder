@@ -1,0 +1,43 @@
+From f9e5e95b647af2dc4cb98dd3289199c70efea05b Mon Sep 17 00:00:00 2001
+From: Felix Fietkau <nbd@openwrt.org>
+Date: Thu, 18 Feb 2016 19:49:18 +0100
+Subject: [PATCH 25/30] mac80211: minstrel_ht: set default tx aggregation
+ timeout to 0
+
+commit 7a36b930e6ed4702c866dc74a5ad07318a57c688 upstream.
+
+The value 5000 was put here with the addition of the timeout field to
+ieee80211_start_tx_ba_session. It was originally added in mac80211 to
+save resources for drivers like iwlwifi, which only supports a limited
+number of concurrent aggregation sessions.
+
+Since iwlwifi does not use minstrel_ht and other drivers don't need
+this, 0 is a better default - especially since there have been
+recent reports of aggregation setup related issues reproduced with
+ath9k. This should improve stability without causing any adverse
+effects.
+
+Acked-by: Avery Pennarun <apenwarr@gmail.com>
+Signed-off-by: Felix Fietkau <nbd@openwrt.org>
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ net/mac80211/rc80211_minstrel_ht.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/mac80211/rc80211_minstrel_ht.c b/net/mac80211/rc80211_minstrel_ht.c
+index f3bbea1eb9e..13f10aab921 100644
+--- a/net/mac80211/rc80211_minstrel_ht.c
++++ b/net/mac80211/rc80211_minstrel_ht.c
+@@ -454,7 +454,7 @@ minstrel_aggr_check(struct ieee80211_sta *pubsta, struct sk_buff *skb)
+ 	if (skb_get_queue_mapping(skb) == IEEE80211_AC_VO)
+ 		return;
+ 
+-	ieee80211_start_tx_ba_session(pubsta, tid, 5000);
++	ieee80211_start_tx_ba_session(pubsta, tid, 0);
+ }
+ 
+ static void
+-- 
+2.25.1
+

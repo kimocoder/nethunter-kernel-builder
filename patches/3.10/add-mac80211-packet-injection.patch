@@ -1,0 +1,40 @@
+From cdb5a2998e74844f0077b87e841a36b1df6478d2 Mon Sep 17 00:00:00 2001
+From: James Christopher Adduono <jc@adduono.com>
+Date: Sun, 31 Jan 2016 04:13:01 -0500
+Subject: [PATCH] mac80211 packet injection patch
+
+Change-Id: I8bed988063d4260893e78fd42881ebfe348bc1d1
+---
+ net/mac80211/tx.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/net/mac80211/tx.c b/net/mac80211/tx.c
+index 10eea232602..ccd3c0964dc 100644
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -762,11 +762,19 @@ ieee80211_tx_h_sequence(struct ieee80211_tx_data *tx)
+ 
+ 	/*
+ 	 * Packet injection may want to control the sequence
+-	 * number, if we have no matching interface then we
+-	 * neither assign one ourselves nor ask the driver to.
++	 * number, so if an injected packet is found, skip
++	 * renumbering it. Also make the packet NO_ACK to avoid
++	 * excessive retries (ACKing and retrying should be
++	 * handled by the injecting application).
++	 * FIXME This may break hostapd and some other injectors.
++	 * This should be done using a radiotap flag.
+ 	 */
+-	if (unlikely(info->control.vif->type == NL80211_IFTYPE_MONITOR))
++	if (unlikely((info->flags & IEEE80211_TX_CTL_INJECTED) &&
++	   !(tx->sdata->u.mntr_flags & MONITOR_FLAG_COOK_FRAMES))) {
++		if (!ieee80211_has_morefrags(hdr->frame_control))
++			info->flags |= IEEE80211_TX_CTL_NO_ACK;
+ 		return TX_CONTINUE;
++	}
+ 
+ 	if (unlikely(ieee80211_is_ctl(hdr->frame_control)))
+ 		return TX_CONTINUE;
+-- 
+2.25.1
+

@@ -1,0 +1,43 @@
+From 7943aeb2c61e23b2f89ae1d2a3b3bfc853d977ed Mon Sep 17 00:00:00 2001
+From: Bob Copeland <me@bobcopeland.com>
+Date: Sat, 13 Jun 2015 10:16:31 -0400
+Subject: [PATCH 21/30] mac80211: enable assoc check for mesh interfaces
+
+commit 3633ebebab2bbe88124388b7620442315c968e8f upstream.
+
+We already set a station to be associated when peering completes, both
+in user space and in the kernel.  Thus we should always have an
+associated sta before sending data frames to that station.
+
+Failure to check assoc state can cause crashes in the lower-level driver
+due to transmitting unicast data frames before driver sta structures
+(e.g. ampdu state in ath9k) are initialized.  This occurred when
+forwarding in the presence of fixed mesh paths: frames were transmitted
+to stations with whom we hadn't yet completed peering.
+
+Reported-by: Alexis Green <agreen@cococorp.com>
+Tested-by: Jesse Jones <jjones@cococorp.com>
+Signed-off-by: Bob Copeland <me@bobcopeland.com>
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ net/mac80211/tx.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/net/mac80211/tx.c b/net/mac80211/tx.c
+index ccd3c0964dc..0b18cefb0f8 100644
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -281,9 +281,6 @@ ieee80211_tx_h_check_assoc(struct ieee80211_tx_data *tx)
+ 	if (tx->sdata->vif.type == NL80211_IFTYPE_WDS)
+ 		return TX_CONTINUE;
+ 
+-	if (tx->sdata->vif.type == NL80211_IFTYPE_MESH_POINT)
+-		return TX_CONTINUE;
+-
+ 	if (tx->flags & IEEE80211_TX_PS_BUFFERED)
+ 		return TX_CONTINUE;
+ 
+-- 
+2.25.1
+

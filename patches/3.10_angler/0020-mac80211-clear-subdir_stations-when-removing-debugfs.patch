@@ -1,0 +1,40 @@
+From 31495b5e90042dadb11bf662b9f560fa5cde5e32 Mon Sep 17 00:00:00 2001
+From: Tom Hughes <tom@compton.nu>
+Date: Mon, 29 Jun 2015 19:41:49 +0100
+Subject: [PATCH 20/30] mac80211: clear subdir_stations when removing debugfs
+
+commit 4479004e6409087d1b4986881dc98c6c15dffb28 upstream.
+
+If we don't do this, and we then fail to recreate the debugfs
+directory during a mode change, then we will fail later trying
+to add stations to this now bogus directory:
+
+BUG: unable to handle kernel NULL pointer dereference at 0000006c
+IP: [<c0a92202>] mutex_lock+0x12/0x30
+Call Trace:
+[<c0678ab4>] start_creating+0x44/0xc0
+[<c0679203>] debugfs_create_dir+0x13/0xf0
+[<f8a938ae>] ieee80211_sta_debugfs_add+0x6e/0x490 [mac80211]
+
+Signed-off-by: Tom Hughes <tom@compton.nu>
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ net/mac80211/debugfs_netdev.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/net/mac80211/debugfs_netdev.c b/net/mac80211/debugfs_netdev.c
+index 2d5b4f65c51..32bafdbdfd6 100644
+--- a/net/mac80211/debugfs_netdev.c
++++ b/net/mac80211/debugfs_netdev.c
+@@ -697,6 +697,7 @@ void ieee80211_debugfs_remove_netdev(struct ieee80211_sub_if_data *sdata)
+ 
+ 	debugfs_remove_recursive(sdata->vif.debugfs_dir);
+ 	sdata->vif.debugfs_dir = NULL;
++	sdata->debugfs.subdir_stations = NULL;
+ }
+ 
+ void ieee80211_debugfs_rename_netdev(struct ieee80211_sub_if_data *sdata)
+-- 
+2.25.1
+

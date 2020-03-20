@@ -1,0 +1,142 @@
+From d2f0284f556df60b7a317d3c34c8d44d8284198f Mon Sep 17 00:00:00 2001
+From: James Christopher Adduono <jc@adduono.com>
+Date: Sun, 8 Jan 2017 08:00:47 -0500
+Subject: [PATCH 03/30] Fix derpy coding
+
+Change-Id: I7d215e33a5cc076da66d35d15598080d00326451
+---
+ drivers/bluetooth/btusb.c                 |  2 +-
+ drivers/net/wireless/bcmdhd/wl_cfg80211.c |  2 +-
+ drivers/usb/phy/class-dual-role.c         |  2 +-
+ drivers/usb/typec/tusb320/tusb320.h       |  2 +-
+ fs/fscache/object.c                       | 10 ++++------
+ fs/nfs/fscache.c                          |  5 ++---
+ mm/filemap.c                              |  2 +-
+ sound/soc/msm/qdsp6v2/q6lsm.c             |  2 +-
+ 8 files changed, 12 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index 97def029fed..e0f7721e29f 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -38,7 +38,7 @@ static bool disable_scofix;
+ static bool force_scofix;
+ 
+ static int sco_conn;
+-static int reset = 1;
++static bool reset = 1;
+ 
+ static struct usb_driver btusb_driver;
+ 
+diff --git a/drivers/net/wireless/bcmdhd/wl_cfg80211.c b/drivers/net/wireless/bcmdhd/wl_cfg80211.c
+index e7ababd395b..9484f158b69 100644
+--- a/drivers/net/wireless/bcmdhd/wl_cfg80211.c
++++ b/drivers/net/wireless/bcmdhd/wl_cfg80211.c
+@@ -2892,7 +2892,7 @@ bcm_cfg80211_add_ibss_if(struct wiphy *wiphy, char *name)
+ 	/* generate a new MAC address for the IBSS interface */
+ 	get_primary_mac(cfg, &cfg->ibss_if_addr);
+ 	cfg->ibss_if_addr.octet[4] ^= 0x40;
+-	memset(&aibss_if, sizeof(aibss_if), 0);
++	memset(&aibss_if, 0, sizeof(aibss_if));
+ 	memcpy(&aibss_if.addr, &cfg->ibss_if_addr, sizeof(aibss_if.addr));
+ 	aibss_if.chspec = 0;
+ 	aibss_if.len = sizeof(aibss_if);
+diff --git a/drivers/usb/phy/class-dual-role.c b/drivers/usb/phy/class-dual-role.c
+index ce889dd529c..51fcb545a9d 100644
+--- a/drivers/usb/phy/class-dual-role.c
++++ b/drivers/usb/phy/class-dual-role.c
+@@ -86,7 +86,7 @@ void dual_role_instance_changed(struct dual_role_phy_instance *dual_role)
+ 	pm_wakeup_event(&dual_role->dev, DUAL_ROLE_NOTIFICATION_TIMEOUT);
+ 	schedule_work(&dual_role->changed_work);
+ }
+-EXPORT_SYMBOL_GPL(dual_role_instance_changed)
++EXPORT_SYMBOL_GPL(dual_role_instance_changed);
+ 
+ int dual_role_get_property(struct dual_role_phy_instance *dual_role,
+ 			   enum dual_role_property prop,
+diff --git a/drivers/usb/typec/tusb320/tusb320.h b/drivers/usb/typec/tusb320/tusb320.h
+index 73d485ecbb0..4f7b59543e3 100755
+--- a/drivers/usb/typec/tusb320/tusb320.h
++++ b/drivers/usb/typec/tusb320/tusb320.h
+@@ -36,7 +36,7 @@ struct tusb320_device_info {
+ 	int reverse_state;
+ 	bool sink_attached;
+ 	bool clean_failded;
+-	bool clean_retry_count;
++	int clean_retry_count;
+ 	struct completion reverse_completion;
+ 	struct mutex mutex;
+ 	struct delayed_work g_current_work;
+diff --git a/fs/fscache/object.c b/fs/fscache/object.c
+index 50d41c18021..5103f977afb 100644
+--- a/fs/fscache/object.c
++++ b/fs/fscache/object.c
+@@ -540,9 +540,8 @@ void fscache_object_lookup_negative(struct fscache_object *object)
+ 		set_bit(FSCACHE_COOKIE_NO_DATA_YET, &cookie->flags);
+ 
+ 		_debug("wake up lookup %p", &cookie->flags);
+-		smp_mb__before_clear_bit();
+-		clear_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags);
+-		smp_mb__after_clear_bit();
++		clear_bit_unlock(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags);
++		smp_mb__after_atomic();
+ 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP);
+ 		set_bit(FSCACHE_OBJECT_EV_REQUEUE, &object->events);
+ 	} else {
+@@ -582,9 +581,8 @@ void fscache_obtained_object(struct fscache_object *object)
+ 		object->state = FSCACHE_OBJECT_AVAILABLE;
+ 		spin_unlock(&object->lock);
+ 
+-		smp_mb__before_clear_bit();
+-		clear_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags);
+-		smp_mb__after_clear_bit();
++		clear_bit_unlock(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags);
++		smp_mb__after_atomic();
+ 		wake_up_bit(&cookie->flags, FSCACHE_COOKIE_LOOKING_UP);
+ 		set_bit(FSCACHE_OBJECT_EV_REQUEUE, &object->events);
+ 	} else {
+diff --git a/fs/nfs/fscache.c b/fs/nfs/fscache.c
+index 24d1d1c5fca..79323ae5b2e 100644
+--- a/fs/nfs/fscache.c
++++ b/fs/nfs/fscache.c
+@@ -284,9 +284,8 @@ static inline void nfs_fscache_inode_unlock(struct inode *inode)
+ {
+ 	struct nfs_inode *nfsi = NFS_I(inode);
+ 
+-	smp_mb__before_clear_bit();
+-	clear_bit(NFS_INO_FSCACHE_LOCK, &nfsi->flags);
+-	smp_mb__after_clear_bit();
++	clear_bit_unlock(NFS_INO_FSCACHE_LOCK, &nfsi->flags);
++	smp_mb__after_atomic();
+ 	wake_up_bit(&nfsi->flags, NFS_INO_FSCACHE_LOCK);
+ }
+ 
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 2a7bdb933e5..71519c658b7 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -735,7 +735,7 @@ out:
+ 
+ 	return page;
+ }
+-EXPORT_SYMBOL(find_get_page);
++EXPORT_SYMBOL(find_get_page_flags);
+ 
+ /**
+  * find_lock_page - locate, pin and lock a pagecache page
+diff --git a/sound/soc/msm/qdsp6v2/q6lsm.c b/sound/soc/msm/qdsp6v2/q6lsm.c
+index c843cf91177..cc336824c46 100644
+--- a/sound/soc/msm/qdsp6v2/q6lsm.c
++++ b/sound/soc/msm/qdsp6v2/q6lsm.c
+@@ -1387,7 +1387,7 @@ int q6lsm_set_one_param(struct lsm_client *client,
+ 	struct lsm_module_param_ids ids;
+ 	u8 *packet;
+ 
+-	memset(&ids, sizeof(ids), 0);
++	memset(&ids, 0, sizeof(ids));
+ 	switch (param_type) {
+ 	case LSM_ENDPOINT_DETECT_THRESHOLD: {
+ 		ids.module_id = p_info->module_id;
+-- 
+2.25.1
+

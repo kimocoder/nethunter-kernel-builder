@@ -1,0 +1,55 @@
+From d5a35cb058614ca5cc3fe697f75bc94a140a6576 Mon Sep 17 00:00:00 2001
+From: Chris Bainbridge <chris.bainbridge@gmail.com>
+Date: Wed, 27 Jan 2016 15:46:18 +0000
+Subject: [PATCH 24/30] mac80211: fix use of uninitialised values in RX
+ aggregation
+
+commit f39ea2690bd61efec97622c48323f40ed6e16317 upstream.
+
+Use kzalloc instead of kmalloc for struct tid_ampdu_rx to
+initialize the "removed" field (all others are initialized
+manually). That fixes:
+
+UBSAN: Undefined behaviour in net/mac80211/rx.c:932:29
+load of value 2 is not a valid value for type '_Bool'
+CPU: 3 PID: 1134 Comm: kworker/u16:7 Not tainted 4.5.0-rc1+ #265
+Workqueue: phy0 rt2x00usb_work_rxdone
+ 0000000000000004 ffff880254a7ba50 ffffffff8181d866 0000000000000007
+ ffff880254a7ba78 ffff880254a7ba68 ffffffff8188422d ffffffff8379b500
+ ffff880254a7bab8 ffffffff81884747 0000000000000202 0000000348620032
+Call Trace:
+ [<ffffffff8181d866>] dump_stack+0x45/0x5f
+ [<ffffffff8188422d>] ubsan_epilogue+0xd/0x40
+ [<ffffffff81884747>] __ubsan_handle_load_invalid_value+0x67/0x70
+ [<ffffffff82227b4d>] ieee80211_sta_reorder_release.isra.16+0x5ed/0x730
+ [<ffffffff8222ca14>] ieee80211_prepare_and_rx_handle+0xd04/0x1c00
+ [<ffffffff8222db03>] __ieee80211_rx_handle_packet+0x1f3/0x750
+ [<ffffffff8222e4a7>] ieee80211_rx_napi+0x447/0x990
+
+While at it, convert to use sizeof(*tid_agg_rx) instead.
+
+Fixes: 788211d81bfdf ("mac80211: fix RX A-MPDU session reorder timer deletion")
+Signed-off-by: Chris Bainbridge <chris.bainbridge@gmail.com>
+[reword commit message, use sizeof(*tid_agg_rx)]
+Signed-off-by: Johannes Berg <johannes.berg@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ net/mac80211/agg-rx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/mac80211/agg-rx.c b/net/mac80211/agg-rx.c
+index 31bf2586fb8..86440802620 100644
+--- a/net/mac80211/agg-rx.c
++++ b/net/mac80211/agg-rx.c
+@@ -290,7 +290,7 @@ void ieee80211_process_addba_request(struct ieee80211_local *local,
+ 	}
+ 
+ 	/* prepare A-MPDU MLME for Rx aggregation */
+-	tid_agg_rx = kmalloc(sizeof(struct tid_ampdu_rx), GFP_KERNEL);
++	tid_agg_rx = kzalloc(sizeof(*tid_agg_rx), GFP_KERNEL);
+ 	if (!tid_agg_rx)
+ 		goto end;
+ 
+-- 
+2.25.1
+

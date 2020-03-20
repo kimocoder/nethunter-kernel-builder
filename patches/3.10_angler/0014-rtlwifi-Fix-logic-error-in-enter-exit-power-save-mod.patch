@@ -1,0 +1,41 @@
+From 109c1873bc783d7e1fe91606b9d6296f977b3451 Mon Sep 17 00:00:00 2001
+From: wang yanqing <udknight@gmail.com>
+Date: Tue, 3 May 2016 00:38:36 +0800
+Subject: [PATCH 14/30] rtlwifi: Fix logic error in enter/exit power-save mode
+
+commit 873ffe154ae074c46ed2d72dbd9a2a99f06f55b4 upstream.
+
+In commit a269913c52ad ("rtlwifi: Rework rtl_lps_leave() and
+rtl_lps_enter() to use work queue"), the tests for enter/exit
+power-save mode were inverted. With this change applied, the
+wifi connection becomes much more stable.
+
+Fixes: a269913c52ad ("rtlwifi: Rework rtl_lps_leave() and rtl_lps_enter() to use work queue")
+Signed-off-by: Wang YanQing <udknight@gmail.com>
+Acked-by: Larry Finger <Larry.Finger@lwfinger.net>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Signed-off-by: Willy Tarreau <w@1wt.eu>
+---
+ drivers/net/wireless/rtlwifi/base.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/rtlwifi/base.c b/drivers/net/wireless/rtlwifi/base.c
+index 6fc0853fd7f..d066f74f743 100644
+--- a/drivers/net/wireless/rtlwifi/base.c
++++ b/drivers/net/wireless/rtlwifi/base.c
+@@ -1392,9 +1392,9 @@ void rtl_watchdog_wq_callback(void *data)
+ 		if (((rtlpriv->link_info.num_rx_inperiod +
+ 		      rtlpriv->link_info.num_tx_inperiod) > 8) ||
+ 		    (rtlpriv->link_info.num_rx_inperiod > 2))
+-			rtlpriv->enter_ps = true;
+-		else
+ 			rtlpriv->enter_ps = false;
++		else
++			rtlpriv->enter_ps = true;
+ 
+ 		/* LeisurePS only work in infra mode. */
+ 		schedule_work(&rtlpriv->works.lps_change_work);
+-- 
+2.25.1
+
