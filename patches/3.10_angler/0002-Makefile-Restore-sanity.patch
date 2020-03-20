@@ -1,0 +1,55 @@
+From 50656fbdaf99fbbfb9bcc7d5e7793546081aa38a Mon Sep 17 00:00:00 2001
+From: James Christopher Adduono <jc@adduono.com>
+Date: Sun, 8 Jan 2017 07:15:01 -0500
+Subject: [PATCH 02/30] Makefile: Restore sanity
+
+Change-Id: I6c30914e22218845a611e1128faf1d7183c518ab
+---
+ Makefile | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 9f0906616b1..be73b1c36e4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -241,7 +241,7 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
+ 
+ HOSTCC       = gcc
+ HOSTCXX      = g++
+-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
++HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
+ HOSTCXXFLAGS = -O2
+ 
+ # Decide whether to build built-in, modular, or both.
+@@ -377,7 +377,8 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+ 		   -fno-strict-aliasing -fno-common \
+ 		   -Werror-implicit-function-declaration \
+ 		   -Wno-format-security \
+-		   -fno-delete-null-pointer-checks
++		   -std=gnu89
++
+ KBUILD_AFLAGS_KERNEL :=
+ KBUILD_CFLAGS_KERNEL :=
+ KBUILD_AFLAGS   := -D__ASSEMBLY__
+@@ -574,10 +575,16 @@ endif # $(dot-config)
+ # Defaults to vmlinux, but the arch makefile usually adds further targets
+ all: vmlinux
+ 
++KBUILD_CFLAGS	+= $(call cc-option,-fno-delete-null-pointer-checks,)
++KBUILD_CFLAGS	+= $(call cc-disable-warning,maybe-uninitialized,)
++KBUILD_CFLAGS	+= $(call cc-disable-warning,unused-const-variable,)
++KBUILD_CFLAGS	+= $(call cc-option,-fno-PIE)
++KBUILD_AFLAGS	+= $(call cc-option,-fno-PIE)
++
+ ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
+-KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
++KBUILD_CFLAGS	+= -Os
+ else
+-KBUILD_CFLAGS	+= -O3 $(call cc-disable-warning,maybe-uninitialized,)
++KBUILD_CFLAGS	+= -O2
+ endif
+ 
+ include $(srctree)/arch/$(SRCARCH)/Makefile
+-- 
+2.25.1
+

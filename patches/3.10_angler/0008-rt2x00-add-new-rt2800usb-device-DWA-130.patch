@@ -1,0 +1,34 @@
+From 01ca7c90e26bd022bea6844bb4798438402ad92d Mon Sep 17 00:00:00 2001
+From: Scott Branden <sbranden@broadcom.com>
+Date: Mon, 16 Mar 2015 10:59:52 -0700
+Subject: [PATCH 08/30] rt2x00: add new rt2800usb device DWA 130
+
+commit ea345c145ff23197eab34d0c4d0c8a93d7bea8c6 upstream.
+
+Add the USB Id to link the D-Link DWA 130 USB Wifi adapter
+to the rt2830 driver.
+
+Signed-off-by: Scott Branden <sbranden@broadcom.com>
+Signed-off-by: Pieter Truter <ptruter@broadcom.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Cc: Larry Finger <Larry.Finger@lwfinger.net>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/net/wireless/rt2x00/rt2800usb.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/wireless/rt2x00/rt2800usb.c b/drivers/net/wireless/rt2x00/rt2800usb.c
+index 400b8679796..44b6715ccfb 100644
+--- a/drivers/net/wireless/rt2x00/rt2800usb.c
++++ b/drivers/net/wireless/rt2x00/rt2800usb.c
+@@ -1020,6 +1020,7 @@ static struct usb_device_id rt2800usb_device_table[] = {
+ 	{ USB_DEVICE(0x07d1, 0x3c16) },
+ 	{ USB_DEVICE(0x07d1, 0x3c17) },
+ 	{ USB_DEVICE(0x2001, 0x3c1b) },
++	{ USB_DEVICE(0x2001, 0x3c25) },
+ 	/* Draytek */
+ 	{ USB_DEVICE(0x07fa, 0x7712) },
+ 	/* DVICO */
+-- 
+2.25.1
+

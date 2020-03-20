@@ -476,7 +476,7 @@ function show_patches() {
 	printf "\n"
         while IFS= read -r -d $'\0' f; do
                 options[i++]="$f"
-        done < <(find * -type f -print0 )
+        done < <(find -L * -type f -print0 )
 }
 
 # Select a patch

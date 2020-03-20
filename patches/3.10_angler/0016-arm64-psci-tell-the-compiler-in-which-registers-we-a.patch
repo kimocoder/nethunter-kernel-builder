@@ -1,0 +1,71 @@
+From 25b186d6cb788ae7acd426fffd4fd009a3c69a5b Mon Sep 17 00:00:00 2001
+From: Andy Whitcroft <apw@canonical.com>
+Date: Fri, 23 Jan 2015 05:31:00 +0000
+Subject: [PATCH 16/30] arm64 -- psci tell the compiler in which registers we
+ are expecting arguments
+
+When compiling the kernel with very recent gcc-4.9 compilers we see the
+following errors:
+
+    /tmp/ccEayz7S.s: Assembler messages:
+    /tmp/ccEayz7S.s:41: Error: .err encountered
+    /tmp/ccEayz7S.s:42: Error: .err encountered
+    /tmp/ccEayz7S.s:43: Error: .err encountered
+    /tmp/ccEayz7S.s:101: Error: .err encountered
+    /tmp/ccEayz7S.s:102: Error: .err encountered
+    /tmp/ccEayz7S.s:103: Error: .err encountered
+
+This is due to assumptions about the register assignments made by gcc on
+function entry.  The errors above occur when these assignments are not
+as expected.  It turns out that when you enable mcount preables (-pg)
+these are altered and the compilation failed.
+
+Inform the compiler of these register requirements.
+
+BugLink: http://bugs.launchpad.net/bugs/1414002
+Signed-off-by: Andy Whitcroft <apw@canonical.com>
+---
+ arch/arm64/kernel/psci.c | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm64/kernel/psci.c b/arch/arm64/kernel/psci.c
+index ec55f46fec7..879b430bebe 100644
+--- a/arch/arm64/kernel/psci.c
++++ b/arch/arm64/kernel/psci.c
+@@ -97,9 +97,14 @@ static u32 psci_power_state_pack(struct psci_power_state state)
+  * The following two functions are invoked via the invoke_psci_fn pointer
+  * and will not be inlined, allowing us to piggyback on the AAPCS.
+  */
+-static noinline int __invoke_psci_fn_hvc(u64 function_id, u64 arg0, u64 arg1,
+-					 u64 arg2)
++static noinline int __invoke_psci_fn_hvc(u64 _function_id, u64 _arg0,
++					 u64 _arg1, u64 _arg2)
+ {
++	register u64 function_id asm("x0") = _function_id;
++	register u64 arg0 asm("x1") = _arg0;
++	register u64 arg1 asm("x2") = _arg1;
++	register u64 arg2 asm("x3") = _arg2;
++
+ 	asm volatile(
+ 			__asmeq("%0", "x0")
+ 			__asmeq("%1", "x1")
+@@ -112,9 +117,14 @@ static noinline int __invoke_psci_fn_hvc(u64 function_id, u64 arg0, u64 arg1,
+ 	return function_id;
+ }
+ 
+-static noinline int __invoke_psci_fn_smc(u64 function_id, u64 arg0, u64 arg1,
+-					 u64 arg2)
++static noinline int __invoke_psci_fn_smc(u64 _function_id, u64 _arg0,
++					 u64 _arg1, u64 _arg2)
+ {
++	register u64 function_id asm("x0") = _function_id;
++	register u64 arg0 asm("x1") = _arg0;
++	register u64 arg1 asm("x2") = _arg1;
++	register u64 arg2 asm("x3") = _arg2;
++
+ 	asm volatile(
+ 			__asmeq("%0", "x0")
+ 			__asmeq("%1", "x1")
+-- 
+2.25.1
+

@@ -1,0 +1,35 @@
+From 02e7e774c99ada7af2e4bcfde5247748cbebd3ad Mon Sep 17 00:00:00 2001
+From: Marek Vasut <marex@denx.de>
+Date: Thu, 26 Mar 2015 02:16:06 +0100
+Subject: [PATCH 07/30] rtlwifi: rtl8192cu: Add new device ID
+
+commit 9374e7d2fdcad3c36dafc8d3effd554bc702c4b6 upstream.
+
+Add new ID for ASUS N10 WiFi dongle.
+
+Signed-off-by: Marek Vasut <marex@denx.de>
+Tested-by: Marek Vasut <marex@denx.de>
+Cc: Larry Finger <Larry.Finger@lwfinger.net>
+Cc: John W. Linville <linville@tuxdriver.com>
+Acked-by: Larry Finger <Larry.Finger@lwfinger.net>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/net/wireless/rtlwifi/rtl8192cu/sw.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/wireless/rtlwifi/rtl8192cu/sw.c b/drivers/net/wireless/rtlwifi/rtl8192cu/sw.c
+index 8cf0d3919b9..7555095e0b7 100644
+--- a/drivers/net/wireless/rtlwifi/rtl8192cu/sw.c
++++ b/drivers/net/wireless/rtlwifi/rtl8192cu/sw.c
+@@ -313,6 +313,7 @@ static struct usb_device_id rtl8192c_usb_ids[] = {
+ 	{RTL_USB_DEVICE(0x07b8, 0x8188, rtl92cu_hal_cfg)}, /*Abocom - Abocom*/
+ 	{RTL_USB_DEVICE(0x07b8, 0x8189, rtl92cu_hal_cfg)}, /*Funai - Abocom*/
+ 	{RTL_USB_DEVICE(0x0846, 0x9041, rtl92cu_hal_cfg)}, /*NetGear WNA1000M*/
++	{RTL_USB_DEVICE(0x0b05, 0x17ba, rtl92cu_hal_cfg)}, /*ASUS-Edimax*/
+ 	{RTL_USB_DEVICE(0x0bda, 0x5088, rtl92cu_hal_cfg)}, /*Thinkware-CC&C*/
+ 	{RTL_USB_DEVICE(0x0df6, 0x0052, rtl92cu_hal_cfg)}, /*Sitecom - Edimax*/
+ 	{RTL_USB_DEVICE(0x0df6, 0x005c, rtl92cu_hal_cfg)}, /*Sitecom - Edimax*/
+-- 
+2.25.1
+
