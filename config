@@ -83,6 +83,12 @@ DO_DTBO=false
 # Set to "true" to enable dtb
 DO_DTB=false
 
+# DTB Version 
+DTB_VER=2
+
+# Space separated list of dtb file to generate in brackets
+DTB_FILES=
+
 # Path to compiled kernel image
 KERNEL_IMAGE=$BUILD_DIR/out/arch/arm64/boot/$IMAGE_NAME
 
@@ -92,8 +98,14 @@ NHKERNEL_DIR=$BUILD_DIR/nethunter
 # Anykernel zip directory
 ANYKERNEL_DIR=$BUILD_DIR/anykernel3
 
-# DTBToolCM
+# DTBTool
 DTBTOOL=$BUILD_DIR/tools/dtbToolCM
+
+# Name of the dtb output image (must be dtb.img when used with nethunter boot-patcher)
+DTB_IMG=dtb.img
+
+# Input DTB path
+DTB_IN=$BUILD_DIR/out/arch/arm64/boot/dts
 
 # Path to compiled dtbo image
 DTBO_IMAGE=$BUILD_DIR/out/arch/arm64/boot/dtbo.img
@@ -114,7 +126,7 @@ UPLOAD_DIR=$BUILD_DIR/output/
 PATCH_DIR="$BUILD_DIR/patches"
 
 # Package dependencies
-PKG_DEPEND="axel bc build-essential curl device-tree-compiler pandoc libncurses5-dev lynx fakeroot xz-utils whiptail"
+PKG_DEPEND="axel bc build-essential ccache curl device-tree-compiler pandoc libncurses5-dev lynx fakeroot xz-utils whiptail"
 
 # Preferred target for make [menu|n]config - "menuconfig" is default but "nconfig" can be used if keymappings are off
 CONFIG_TOOL=menuconfig

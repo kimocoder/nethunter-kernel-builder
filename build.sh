@@ -114,7 +114,14 @@ function make_aclean() {
 function make_oclean() {
 	printf "\n"
 	info "Cleaning up kernel-out & modules-out directories"
-	rm -rf "$KERNEL_OUT"
+	if [ "$KDIR" == "$KERNEL_OUT" ]; then
+		# Clean the source tree as well if we use it to build the kernel, i.e. we have no OUT directory
+		make -C $KDIR clean && make -C $KDIR mrproper
+	else
+		## Let's make sure we dont't delete the kernel source if we compile in the source tree
+		warning "I would have deleted the source tree!!!!!!!!!!!"
+		#rm -rf "$KERNEL_OUT"
+	fi
 	rm -rf "$MODULES_OUT"
 	success "Out directories removed!"
 }
@@ -130,7 +137,6 @@ function make_sclean() {
 	if [ -f ${confdir}/$CONFIG.new ]; then
 	        rm -f ${confdir}/$CONFIG.new 
 	fi
-	#make -C $KDIR clean && make -C $KDIR mrproper
 	success "Source directory cleaned"
 }
 
@@ -140,7 +146,6 @@ function make_fclean() {
 	make_nhclean
 	make_aclean
 	make_oclean
-	make_sclean
 	pause
 }
 
@@ -552,8 +557,15 @@ function make_kernel() {
 	info " Building kernel"
 	info "~~~~~~~~~~~~~~~~~~"
 	copy_version
-	time make -C $KDIR O="$KERNEL_OUT" $cc  -j "$THREADS"
-	time make -C $KDIR O="$KERNEL_OUT" $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+	## Some kernel sources do not compile into a separate $OUT directory so we set $OUT = $ KDIR
+	## This works with clean and config targets but not for a build, we'll catch this here
+	if [ "$KDIR" == "$KERNEL_OUT" ]; then
+		time make -C $KDIR $cc  -j "$THREADS"
+		time make -C $KDIR $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+	else
+		time make -C $KDIR O="$KERNEL_OUT" $cc  -j "$THREADS"
+		time make -C $KDIR O="$KERNEL_OUT" $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+	fi
 	rm -f ${MODULES_OUT}/lib/modules/*/source
 	rm -f ${MODULES_OUT}/lib/modules/*/build
 	success "Kernel build completed"
@@ -635,9 +647,19 @@ function make_anykernel_zip() {
 # Function to generate a dtb image, expects output directory as argument
 function make_dtb() {
 	local dtb_dir=$1
+	if [ "$DTB_VER" == "2" ]; then
+		DTB_VER="-2"
+	elif [ ! "DTB_VER" == "-2" ]; then
+		unset DTB_VER
+	fi
 	printf "\n"
+	info " Building dtb"
+	make -C $KDIR $cc -j "$THREADS" $DTB_FILES    # Don't use brackets around $DTB_FILES
 	info "Generating DTB Image"
-	$DTBTOOL -2 -o $dtb_dir/dtb -s 2048 -p $KERNEL_OUT/scripts/dtc/ $KERNEL_OUT/arch/arm64/boot/dts/qcom/
+	$DTBTOOL $DTB_VER -o $dtb_dir/$DTB_IMG -s 2048 -p $KERNEL_OUT/scripts/dtc/ $DTB_IN/
+	rm -rf $DTB_IN/.*.tmp
+	rm -rf $DTB_IN/.*.cmd
+	rm -rf $DTB_IN/*.dtb
 	success "DTB generated"
 }
 
@@ -759,6 +781,7 @@ read_choice(){
 		2)
 		   clear
 		   make_oclean
+		   make_sclean
 		   setup_dirs
 		   edit_config && make_kernel
 		   ;;
