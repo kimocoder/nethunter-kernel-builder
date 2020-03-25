@@ -487,9 +487,9 @@ function show_patches() {
 # Select a patch
 function select_patch() {
 	COLUMNS=12
-        select opt in "${options[@]}" "Cancel"; do
+        select opt in "${options[@]}" "Return"; do
                 case $opt in
-                        "Cancel")
+                        "Return")
 			    cd -
                             return 1
                             ;;
@@ -515,9 +515,9 @@ function patch_kernel() {
         while IFS= read -r -d $'\0' f; do
                 options[i++]="$f"
         done < <(find * -type d -print0 )
-        select opt in "${options[@]}" "Cancel"; do
+        select opt in "${options[@]}" "Return"; do
                 case $opt in
-                        "Cancel")
+                        "Return")
 			    cd -
                             return 1
                             ;;
