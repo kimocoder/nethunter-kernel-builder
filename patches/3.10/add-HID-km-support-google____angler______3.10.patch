@@ -1,20 +1,4 @@
-From 829f4afb6040d22a84e37ae5ae0ba0dd15733db1 Mon Sep 17 00:00:00 2001
-From: James Christopher Adduono <jc@adduono.com>
-Date: Sun, 8 Jan 2017 08:30:32 -0500
-Subject: [PATCH] HID keyboard/mouse gadget support
-
-Change-Id: I0c542ee7ae459c9c4e80d116cd5f55a3e00f0e86
----
- drivers/usb/gadget/Makefile                 |   2 +-
- drivers/usb/gadget/android.c                |  57 +++++++++++
- drivers/usb/gadget/f_hid.c                  | 100 +++++++++++++++++++-
- drivers/usb/gadget/f_hid.h                  |  16 ++++
- drivers/usb/gadget/f_hid_android_keyboard.c |  44 +++++++++
- drivers/usb/gadget/f_hid_android_mouse.c    |  40 ++++++++
- 6 files changed, 253 insertions(+), 6 deletions(-)
- create mode 100644 drivers/usb/gadget/f_hid.h
- create mode 100644 drivers/usb/gadget/f_hid_android_keyboard.c
- create mode 100644 drivers/usb/gadget/f_hid_android_mouse.c
+# https://github.com/BenWoodworth/Nexus-6P-HID-Gadget/compare/309d642...51e180b
 
 diff --git a/drivers/usb/gadget/Makefile b/drivers/usb/gadget/Makefile
 index c608227491a..8c3f31da054 100644
@@ -30,7 +14,7 @@ index c608227491a..8c3f31da054 100644
  
  obj-$(CONFIG_USB_ZERO)		+= g_zero.o
 diff --git a/drivers/usb/gadget/android.c b/drivers/usb/gadget/android.c
-index 81b55f330d3..1a868621913 100644
+index 81b55f330d3..a72d31d5387 100644
 --- a/drivers/usb/gadget/android.c
 +++ b/drivers/usb/gadget/android.c
 @@ -61,6 +61,9 @@
@@ -86,50 +70,26 @@ index 81b55f330d3..1a868621913 100644
  static struct android_usb_function *supported_functions[] = {
  	&ffs_function,
  	&mbim_function,
-@@ -2945,6 +2984,7 @@ static struct android_usb_function *supported_functions[] = {
- #ifdef CONFIG_SND_RAWMIDI
- 	&midi_function,
+@@ -2940,6 +2979,7 @@ static struct android_usb_function *supported_functions[] = {
+ #ifdef CONFIG_SND_PCM
+ 	&audio_source_function,
  #endif
 +	&hid_function,
- 	NULL
- };
+ 	&uasp_function,
+ 	&charger_function,
+ #ifdef CONFIG_SND_RAWMIDI
+@@ -3347,6 +3387,9 @@ functions_store(struct device *pdev, struct device_attribute *attr,
+ 		}
+ 	}
  
-@@ -3269,6 +3309,7 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 	int err;
- 	int is_ffs;
- 	int ffs_enabled = 0;
-+	int hid_enabled = 0;
- 
- 	mutex_lock(&ffs_configs_lock);
- 	mutex_lock(&dev->mutex);
-@@ -3310,9 +3351,25 @@ functions_store(struct device *pdev, struct device_attribute *attr,
- 		else
- 			conf = alloc_android_config(dev);
- 
-+		/* Always enable HID gadget function. */
-+		if (!hid_enabled) {
-+			name = "hid";
-+			err = android_enable_function(dev, conf, name);
-+			if (err)
-+				pr_err("android_usb: Cannot enable '%s' (%d)", name, err);
-+			else
-+				hid_enabled = 1;
-+		}
++	/* HID driver always enabled, it's the whole point of this kernel patch */
++	android_enable_function(dev, conf, "hid");
 +
- 		curr_conf = curr_conf->next;
- 		while (conf_str) {
- 			name = strsep(&conf_str, ",");
-+			if (!name)
-+				continue;
-+
-+			if (!strcmp(name, "hid"))
-+				continue; /* HID already enabled above */
-+
- 			is_ffs = 0;
- 			strlcpy(aliases, dev->ffs_aliases, sizeof(aliases));
- 			a = aliases;
+ 	/* Free uneeded configurations if exists */
+ 	while (curr_conf->next != &dev->configs) {
+ 		conf = list_entry(curr_conf->next,
 diff --git a/drivers/usb/gadget/f_hid.c b/drivers/usb/gadget/f_hid.c
-index 6e69a8e8d22..9554c10c031 100644
+index 6e69a8e8d22..032d3baad66 100644
 --- a/drivers/usb/gadget/f_hid.c
 +++ b/drivers/usb/gadget/f_hid.c
 @@ -17,8 +17,10 @@
@@ -310,8 +270,9 @@ index 6e69a8e8d22..9554c10c031 100644
  	cdev_del(&hidg->cdev);
  
  	/* disable/free request and end point */
- 	usb_ep_disable(hidg->in_ep);
+-	usb_ep_disable(hidg->in_ep);
 -	usb_ep_dequeue(hidg->in_ep, hidg->req);
++	usb_ep_disable(hidg->in_ep);	
 +	/* TODO: calling this function crash kernel,
 +	   not calling this funct ion crash kernel inside f_hidg_write */
 +	/* usb_ep_dequeue(hidg->in_ep, hidg->req); */
@@ -339,10 +300,10 @@ index 6e69a8e8d22..9554c10c031 100644
  	dev_t dev;
 diff --git a/drivers/usb/gadget/f_hid.h b/drivers/usb/gadget/f_hid.h
 new file mode 100644
-index 00000000000..ad3527a6d81
+index 00000000000..72c4e06b8dc
 --- /dev/null
 +++ b/drivers/usb/gadget/f_hid.h
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,17 @@
 +#ifndef _GADGET_F_HID_H
 +#define _GADGET_F_HID_H
 +
@@ -359,12 +320,13 @@ index 00000000000..ad3527a6d81
 +void ghid_cleanup(void);
 +
 +#endif
++
 diff --git a/drivers/usb/gadget/f_hid_android_keyboard.c b/drivers/usb/gadget/f_hid_android_keyboard.c
 new file mode 100644
-index 00000000000..1824bddec55
+index 00000000000..c4e0d8c97d4
 --- /dev/null
 +++ b/drivers/usb/gadget/f_hid_android_keyboard.c
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,45 @@
 +#include <linux/platform_device.h>
 +#include <linux/usb/g_hid.h>
 +
@@ -409,6 +371,7 @@ index 00000000000..1824bddec55
 +		0xc0		/* END_COLLECTION                         */
 +	}
 +};
++
 diff --git a/drivers/usb/gadget/f_hid_android_mouse.c b/drivers/usb/gadget/f_hid_android_mouse.c
 new file mode 100644
 index 00000000000..075d1252270
@@ -455,6 +418,3 @@ index 00000000000..075d1252270
 +	}
 +};
 +
--- 
-2.25.1
-

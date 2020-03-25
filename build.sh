@@ -114,13 +114,13 @@ function make_aclean() {
 function make_oclean() {
 	printf "\n"
 	info "Cleaning up kernel-out & modules-out directories"
+	## Let's make sure we dont't delete the kernel source if we compile in the source tree
 	if [ "$KDIR" == "$KERNEL_OUT" ]; then
 		# Clean the source tree as well if we use it to build the kernel, i.e. we have no OUT directory
 		make -C $KDIR clean && make -C $KDIR mrproper
+		rm -f $KDIR/source
 	else
-		## Let's make sure we dont't delete the kernel source if we compile in the source tree
-		warning "I would have deleted the source tree!!!!!!!!!!!"
-		#rm -rf "$KERNEL_OUT"
+		rm -rf "$KERNEL_OUT"
 	fi
 	rm -rf "$MODULES_OUT"
 	success "Out directories removed!"
