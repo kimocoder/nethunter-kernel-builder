@@ -594,7 +594,7 @@ function make_nhkernel_zip() {
 	if [ -d ${MODULES_OUT}/lib ]; then
 		info "Copying modules to zip directory.."
 		mkdir -p ${NHKERNEL_DIR}/${MODULE_DIRTREE}
-		cp -r ${MODULES_OUT}/lib ${NHKERNEL_DIR}/${MODULE_DIRTREE}/
+		cp -r ${MODULES_IN} ${NHKERNEL_DIR}/${MODULE_DIRTREE}/
 	fi	
 	success "Done"
 	printf "\n"
@@ -627,7 +627,7 @@ function make_anykernel_zip() {
 	if [ -d ${MODULES_OUT}/lib ]; then
 		info "Copying modules to zip directory"
 		mkdir -p ${ANYKERNEL_DIR}/${MODULE_DIRTREE}
-		cp -r ${MODULES_OUT}/lib ${ANYKERNEL_DIR}/${MODULE_DIRTREE}
+		cp -r ${MODULES_IN} ${ANYKERNEL_DIR}/${MODULE_DIRTREE}
 	fi	
 	success "Done"
 	make_clog

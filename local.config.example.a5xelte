@@ -61,5 +61,12 @@ DTB_IN=$KDIR/arch/arm64/boot/dts
 # Location to build the kernel
 KERNEL_OUT="$KDIR"
 
+# Directory structure on the target device that will contain the modules directory
+MODULE_DIRTREE=""
+
+# Source Path for module tree to be copied to into nethunter zip
+MODULES_IN=$BUILD_DIR/modules_out/lib/modules
+
 # Kernel local name
 export LOCALVERSION=-Re4son-1.0
+
