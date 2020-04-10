@@ -1,0 +1,26 @@
+From ca08830172d8a6ffa9a42c72c5a184009fc2d94d Mon Sep 17 00:00:00 2001
+From: Re4son <3520622-re4son@users.noreply.gitlab.com>
+Date: Thu, 9 Apr 2020 23:46:24 +1000
+Subject: [PATCH] Fix wireguard compilation error
+
+Signed-off-by: Re4son <3520622-re4son@users.noreply.gitlab.com>
+---
+ net/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/Kconfig b/net/Kconfig
+index c55d58ed5dd..3c31efbabf3 100644
+--- a/net/Kconfig
++++ b/net/Kconfig
+@@ -75,7 +75,7 @@ config INET
+ 	  Short answer: say Y.
+ 
+ if INET
+-source "net/wireguard/Kconfig"
++##source "net/wireguard/Kconfig"
+ source "net/ipv4/Kconfig"
+ source "net/ipv6/Kconfig"
+ source "net/netlabel/Kconfig"
+-- 
+2.25.1
+
