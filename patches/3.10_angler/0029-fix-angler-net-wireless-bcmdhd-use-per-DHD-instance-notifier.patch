@@ -1,0 +1,104 @@
+From 8813e0891513773b3cb7947917e760ef6cfafd9d Mon Sep 17 00:00:00 2001
+From: Re4son <3520622-re4son@users.noreply.gitlab.com>
+Date: Thu, 19 Mar 2020 21:27:59 +1100
+Subject: [PATCH] net/wireless/bcmdhd: use per DHD-instance notifier
+
+In wl_cfg80211_netdev_notifier_call() we can not assume that net_device
+passed in actually belongs to Broadcom driver; it can be any other
+network device in the system. So we can not assume that we can get valid
+cfg pointer from it.
+
+To avoid crashing let's install individual notifiers per-cfg instances
+and get cfg from the notifier itself.
+
+Fixes reboots when inserting wifi adapters.
+
+Signed-off-by: Re4son <3520622-re4son@users.noreply.gitlab.com>
+---
+ drivers/net/wireless/bcmdhd/wl_cfg80211.c | 31 ++++++++---------------
+ drivers/net/wireless/bcmdhd/wl_cfg80211.h |  1 +
+ 2 files changed, 11 insertions(+), 21 deletions(-)
+
+diff --git a/drivers/net/wireless/bcmdhd/wl_cfg80211.c b/drivers/net/wireless/bcmdhd/wl_cfg80211.c
+index 72243f219f4..baa83316d3b 100644
+--- a/drivers/net/wireless/bcmdhd/wl_cfg80211.c
++++ b/drivers/net/wireless/bcmdhd/wl_cfg80211.c
+@@ -10313,13 +10313,15 @@ wl_cfg80211_netdev_notifier_call(struct notifier_block * nb,
+ 	unsigned long state,
+ 	void *ndev)
+ {
++	struct bcm_cfg80211 *cfg =
++		container_of(nb, struct bcm_cfg80211, netdev_notifier);
+ 	struct net_device *dev = ndev;
+ 	struct wireless_dev *wdev = dev->ieee80211_ptr;
+-	struct bcm_cfg80211 *cfg = wl_get_cfg(dev);
++	//struct bcm_cfg80211 *cfg = wl_get_cfg(dev);
+ 
+ 	WL_DBG(("Enter \n"));
+ 
+-	if (!wdev || !cfg || dev == bcmcfg_to_prmry_ndev(cfg))
++	if (!wdev || dev == bcmcfg_to_prmry_ndev(cfg))
+ 		return NOTIFY_DONE;
+ 
+ 	switch (state) {
+@@ -10376,13 +10378,6 @@ wl_cfg80211_netdev_notifier_call(struct notifier_block * nb,
+ 	}
+ 	return NOTIFY_DONE;
+ }
+-static struct notifier_block wl_cfg80211_netdev_notifier = {
+-	.notifier_call = wl_cfg80211_netdev_notifier_call,
+-};
+-/* to make sure we won't register the same notifier twice, otherwise a loop is likely to be
+- * created in kernel notifier link list (with 'next' pointing to itself)
+- */
+-static bool wl_cfg80211_netdev_notifier_registered = FALSE;
+ 
+ static void wl_cfg80211_scan_abort(struct bcm_cfg80211 *cfg)
+ {
+@@ -11066,10 +11061,7 @@ static void wl_deinit_priv(struct bcm_cfg80211 *cfg)
+ 	wl_link_down(cfg);
+ 	del_timer_sync(&cfg->scan_timeout);
+ 	wl_deinit_priv_mem(cfg);
+-	if (wl_cfg80211_netdev_notifier_registered) {
+-		wl_cfg80211_netdev_notifier_registered = FALSE;
+-		unregister_netdevice_notifier(&wl_cfg80211_netdev_notifier);
+-	}
++	unregister_netdevice_notifier(&cfg->netdev_notifier);
+ }
+ 
+ #if defined(WL_ENABLE_P2P_IF)
+@@ -11241,14 +11233,11 @@ s32 wl_cfg80211_attach(struct net_device *ndev, void *context)
+ 		goto cfg80211_attach_out;
+ 	}
+ #endif
+-	if (!wl_cfg80211_netdev_notifier_registered) {
+-		wl_cfg80211_netdev_notifier_registered = TRUE;
+-		err = register_netdevice_notifier(&wl_cfg80211_netdev_notifier);
+-		if (err) {
+-			wl_cfg80211_netdev_notifier_registered = FALSE;
+-			WL_ERR(("Failed to register notifierl %d\n", err));
+-			goto cfg80211_attach_out;
+-		}
++	cfg->netdev_notifier.notifier_call = wl_cfg80211_netdev_notifier_call;
++	err = register_netdevice_notifier(&cfg->netdev_notifier);
++	if (err) {
++		WL_ERR(("Failed to register notifierl %d\n", err));
++		goto cfg80211_attach_out;
+ 	}
+ #if defined(COEX_DHCP)
+ 	cfg->btcoex_info = wl_cfg80211_btcoex_init(cfg->wdev->netdev);
+diff --git a/drivers/net/wireless/bcmdhd/wl_cfg80211.h b/drivers/net/wireless/bcmdhd/wl_cfg80211.h
+index db89ca39afe..34289d75b8e 100644
+--- a/drivers/net/wireless/bcmdhd/wl_cfg80211.h
++++ b/drivers/net/wireless/bcmdhd/wl_cfg80211.h
+@@ -595,6 +595,7 @@ struct bcm_cfg80211 {
+ 	s32 cfgdev_bssidx;
+ 	bool bss_pending_op;		/* indicate where there is a pending IF operation */
+ 	bool roam_offload;
++	struct notifier_block netdev_notifier;
+ };
+ 
+ extern int ioctl_version;
+-- 
+2.25.1
+
