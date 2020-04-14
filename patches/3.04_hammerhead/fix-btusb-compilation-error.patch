@@ -1,0 +1,35 @@
+From 6d7235bc5b3f900102ab12a4320edd6823b56eed Mon Sep 17 00:00:00 2001
+From: Re4son <3520622-re4son@users.noreply.gitlab.com>
+Date: Tue, 14 Apr 2020 18:07:07 +1000
+Subject: [PATCH] Fix btusb compilation error
+
+Do not treat the following warning as error:
+
+In file included from /home/re4son/android/android_kernel_lge_hammerhead/include/linux/module.h:17:0,
+                 from /home/re4son/android/android_kernel_lge_hammerhead/drivers/bluetooth/btusb.c:25:
+/home/re4son/android/android_kernel_lge_hammerhead/drivers/bluetooth/btusb.c: In function '__check_ignore_dga':
+/home/re4son/android/android_kernel_lge_hammerhead/include/linux/moduleparam.h:339:45: warning: return from incompatible pointer type
+error, forbidden warning: moduleparam.h:339
+
+Signed-off-by: Re4son <3520622-re4son@users.noreply.gitlab.com>
+---
+ drivers/bluetooth/Makefile | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/bluetooth/Makefile b/drivers/bluetooth/Makefile
+index a20a056b77b..b126ee97a39 100644
+--- a/drivers/bluetooth/Makefile
++++ b/drivers/bluetooth/Makefile
+@@ -2,6 +2,9 @@
+ # Makefile for the Linux Bluetooth HCI device drivers.
+ #
+ 
++KBUILD_CFLAGS += -w
++KBUILD_CFLAGS += -Wno-error=unused-but-set-variable
++
+ obj-$(CONFIG_BT_HCISMD)		+= hci_smd.o
+ obj-$(CONFIG_BT_HCIVHCI)	+= hci_vhci.o
+ obj-$(CONFIG_BT_HCIUART)	+= hci_uart.o
+-- 
+2.25.1
+
