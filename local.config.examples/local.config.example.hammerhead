@@ -28,6 +28,8 @@ export CROSS_COMPILE_ARM32=${CCD32}/bin/arm-linux-gnueabihf-
 CROSS_COMPILE_ARM32_SRC="https://images.kali.org/nethunter/toolchains/linaro-armhf-4.9.tar.xz"
 CROSS_COMPILE_ARM32_TYPE="wget"
 
+# Additional compiler arguments
+MAKE_ARGS=""
 
 # Architecture
 export ARCH=arm
