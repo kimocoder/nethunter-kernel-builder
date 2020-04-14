@@ -134,6 +134,9 @@ PKG_DEPEND="axel bc build-essential ccache curl device-tree-compiler pandoc libn
 # Preferred target for make [menu|n]config - "menuconfig" is default but "nconfig" can be used if keymappings are off
 CONFIG_TOOL=menuconfig
 
+# Additional compiler arguments
+MAKE_ARGS=""
+
 ####################################################################
 # Overwrite any of the above settings with this local config file: #
 LOCAL_CONFIG=local.config

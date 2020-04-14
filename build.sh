@@ -560,10 +560,10 @@ function make_kernel() {
 	## Some kernel sources do not compile into a separate $OUT directory so we set $OUT = $ KDIR
 	## This works with clean and config targets but not for a build, we'll catch this here
 	if [ "$KDIR" == "$KERNEL_OUT" ]; then
-		time make -C $KDIR $cc  -j "$THREADS"
+		time make -C $KDIR $cc  -j "$THREADS" ${MAKE_ARGS}
 		time make -C $KDIR $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
 	else
-		time make -C $KDIR O="$KERNEL_OUT" $cc  -j "$THREADS"
+		time make -C $KDIR O="$KERNEL_OUT" $cc  -j "$THREADS" ${MAKE_ARGS}
 		time make -C $KDIR O="$KERNEL_OUT" $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
 	fi
 	rm -f ${MODULES_OUT}/lib/modules/*/source
