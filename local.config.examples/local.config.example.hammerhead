@@ -17,7 +17,10 @@ unset CLANG_PATH
 unset LD_LIBRARY_PATH
 unset CLANG_TRIPLE
 unset CC
+unset CLANG_SRC
 
+# GCC 64bit
+unset CROSS_COMPILE_SRC
 
 # GCC 32bit
 ## armhf cross compiler directory:
