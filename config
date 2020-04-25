@@ -129,7 +129,8 @@ UPLOAD_DIR=$BUILD_DIR/output/
 PATCH_DIR="$BUILD_DIR/patches"
 
 # Package dependencies
-PKG_DEPEND="axel bc build-essential ccache curl device-tree-compiler pandoc libncurses5-dev lynx lz4 fakeroot xz-utils whiptail"
+DEBIAN_DEPEND="axel bc build-essential ccache curl device-tree-compiler pandoc libncurses5-dev lynx lz4 fakeroot xz-utils whiptail"
+SUSE_DEPEND="axel bc ccache curl dtc pandoc libncurses6 lynx lz4 make ncurses-devel newt patch python-base fakeroot xz zip"
 
 # Preferred target for make [menu|n]config - "menuconfig" is default but "nconfig" can be used if keymappings are off
 CONFIG_TOOL=menuconfig

@@ -94,6 +94,13 @@ function question() {
         printf "${yellow}[ QUESTION ]${reset} "
 }
 
+# Detect OS
+function check_os() {
+	if [ -f /etc/SUSE-brand ]; then
+		suse=true
+	fi
+}
+
 # Clean nhkernel directory
 function make_nhclean() {
 	printf "\n"
@@ -231,11 +238,18 @@ function verify_sha256 {
 # Install dependencies
 function get_dependencies() {
         info "Installing dependencies"
-        sudo apt-get update
-	for i in $PKG_DEPEND;
-	do
-                sudo apt-get install -y $i
-        done
+	if [ "$suse" = true ]; then
+		for i in $SUSE_DEPEND;
+       		do
+               		sudo zypper in -y $i
+       		done
+	else
+        	sudo apt-get update
+		for i in $DEBIAN_DEPEND;
+		do
+                	sudo apt-get install -y $i
+        	done
+	fi
 }
 
 # Download toolchain; required arguments: "source URL" "Download type(wget/git)" 
@@ -837,6 +851,7 @@ read_choice(){
 }
 
 # Main
+check_os
 while true
 do
 	unset cfg_done
