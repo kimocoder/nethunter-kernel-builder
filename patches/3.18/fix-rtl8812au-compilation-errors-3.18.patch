@@ -1,0 +1,79 @@
+From 3b0f3044cb4ae41a2d7937d41f079d2faab56af9 Mon Sep 17 00:00:00 2001
+From: Re4son <re4son@users.noreply.github.com>
+Date: Wed, 29 Apr 2020 17:55:07 +1000
+Subject: [PATCH] Fix rtl8812au compilation error against 3.18
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+In function "cfg80211_vendor_event_alloc"
+
+Fixes these errors:
+
+rtl8812au/os_dep/linux/rtw_cfgvendor.c:143:37: note: in definition of macro ‘rtw_cfg80211_vendor_event_alloc’
+  cfg80211_vendor_event_alloc(wiphy, len, event_id, gfp)
+                                     ^
+In file included from rtl8812au/include/osdep_service_linux.h:75:0,
+                 from rtl8812au/include/osdep_service.h:41,
+                 from rtl8812au/include/drv_types.h:32,
+                 from rtl8812au/os_dep/linux/rtw_cfgvendor.c:21:
+include/net/cfg80211.h:4371:1: note: expected ‘struct wireless_dev *’ but argument is of type ‘int’
+ cfg80211_vendor_event_alloc(struct wiphy *wiphy, struct wireless_dev *wdev,
+ ^
+rtl8812au/os_dep/linux/rtw_cfgvendor.c:143:2: error: too few arguments to function ‘cfg80211_vendor_event_alloc’
+  cfg80211_vendor_event_alloc(wiphy, len, event_id, gfp)
+  ^
+rtl8812au/s_dep/linux/rtw_cfgvendor.c:170:8: note: in expansion of macro ‘rtw_cfg80211_vendor_event_alloc’
+  skb = rtw_cfg80211_vendor_event_alloc(wiphy, len, event_id, kflags);
+        ^
+In file included from rtl8812au/include/osdep_service_linux.h:75:0,
+                 from rtl8812au/include/osdep_service.h:41,
+                 from rtl8812au/include/drv_types.h:32,
+                 from rtl8812au/os_dep/linux/rtw_cfgvendor.c:21:
+include/net/cfg80211.h:4371:1: note: declared here
+ cfg80211_vendor_event_alloc(struct wiphy *wiphy, struct wireless_dev *wdev,
+
+Signed-off-by: Re4son <re4son@users.noreply.github.com>
+---
+ drivers/net/wireless/rtl8812au/os_dep/linux/ioctl_cfg80211.h | 2 +-
+ drivers/net/wireless/rtl8812au/os_dep/linux/rtw_cfgvendor.c  | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/wireless/rtl8812au/os_dep/linux/ioctl_cfg80211.h b/drivers/net/wireless/rtl8812au/os_dep/linux/ioctl_cfg80211.h
+index 677548015b25..6113bffa5c64 100644
+--- a/drivers/net/wireless/rtl8812au/os_dep/linux/ioctl_cfg80211.h
++++ b/drivers/net/wireless/rtl8812au/os_dep/linux/ioctl_cfg80211.h
+@@ -388,7 +388,7 @@ void rtw_cfg80211_deinit_rfkill(struct wiphy *wiphy);
+ 
+ #define rtw_cfg80211_connect_result(wdev, bssid, req_ie, req_ie_len, resp_ie, resp_ie_len, status, gfp) cfg80211_connect_result(wdev_to_ndev(wdev), bssid, req_ie, req_ie_len, resp_ie, resp_ie_len, status, gfp)
+ 
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0))
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0))
+ #define rtw_cfg80211_disconnected(wdev, reason, ie, ie_len, locally_generated, gfp) cfg80211_disconnected(wdev_to_ndev(wdev), reason, ie, ie_len, gfp)
+ #else
+ #define rtw_cfg80211_disconnected(wdev, reason, ie, ie_len, locally_generated, gfp) cfg80211_disconnected(wdev_to_ndev(wdev), reason, ie, ie_len, locally_generated, gfp)
+diff --git a/drivers/net/wireless/rtl8812au/os_dep/linux/rtw_cfgvendor.c b/drivers/net/wireless/rtl8812au/os_dep/linux/rtw_cfgvendor.c
+index 138e5ee477a2..838fc75f04e0 100644
+--- a/drivers/net/wireless/rtl8812au/os_dep/linux/rtw_cfgvendor.c
++++ b/drivers/net/wireless/rtl8812au/os_dep/linux/rtw_cfgvendor.c
+@@ -45,7 +45,7 @@ struct sk_buff *dbg_rtw_cfg80211_vendor_event_alloc(struct wiphy *wiphy, struct
+ 	struct sk_buff *skb;
+ 	unsigned int truesize = 0;
+ 
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0))
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0))
+ 	skb = cfg80211_vendor_event_alloc(wiphy, len, event_id, gfp);
+ #else
+ 	skb = cfg80211_vendor_event_alloc(wiphy, wdev, len, event_id, gfp);
+@@ -144,7 +144,7 @@ struct sk_buff *rtw_cfg80211_vendor_event_alloc(
+ {
+ 	struct sk_buff *skb;
+ 
+-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0))
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 18, 0))
+ 	skb = cfg80211_vendor_event_alloc(wiphy, len, event_id, gfp);
+ #else
+ 	skb = cfg80211_vendor_event_alloc(wiphy, wdev, len, event_id, gfp);
+-- 
+2.26.1
+

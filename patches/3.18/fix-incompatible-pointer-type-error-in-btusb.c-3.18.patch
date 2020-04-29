@@ -1,0 +1,32 @@
+From bd11e32ae749f32055df39f58559de87528f4e9f Mon Sep 17 00:00:00 2001
+From: Re4son <re4son@users.noreply.github.com>
+Date: Tue, 28 Apr 2020 21:43:17 +1000
+Subject: [PATCH] Fix "incompatible pointer type" error in btusb.c
+
+Fix error message:
+
+drivers/bluetooth/btusb.c: In function '__check_reset':
+include/linux/moduleparam.h:378:61: warning: return from incompatible pointer type
+error, forbidden warning: moduleparam.h:378
+
+Signed-off-by: Re4son <re4son@users.noreply.github.com>
+---
+ drivers/bluetooth/btusb.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index b5ae8e734396..58f30277e357 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -36,7 +36,7 @@ static bool disable_scofix;
+ static bool force_scofix;
+ 
+ static int sco_conn;
+-static int reset = 1;
++static bool reset = true;
+ 
+ static struct usb_driver btusb_driver;
+ 
+-- 
+2.26.1
+
