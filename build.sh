@@ -552,10 +552,30 @@ function patch_kernel() {
 	return 0
 }
 
+# Enable ccache to speed up compilation
+function enable_ccache() {
+	if [ "$CCACHE" = true ]; then
+                if [ ! -z "${CC}" ]; then
+			CC="ccache $CC"
+		fi
+                if [ ! -z "${CROSS_COMPILE}" ]; then
+			export CROSS_COMPILE="ccache ${CROSS_COMPILE}"
+		fi
+                if [ ! -z "${CROSS_COMPILE_ARM32}" ]; then
+			export CROSS_COMPILE_ARM32="ccache ${CROSS_COMPILE_ARM32}"
+		fi
+	        info "~~~~~~~~~~~~~~~~~~"
+		info " ccache enabled"
+		info "~~~~~~~~~~~~~~~~~~"
+	fi
+	return 0
+}
+
 # Compile the kernel
 function make_kernel() {
 	local cc
 	local confdir=${KDIR}/arch/$ARCH/configs
+	enable_ccache
 	printf "\n"
         # CC=clang cannot be exported. Let's compile with clang if "CC" is set to "clang" in the config
 	if [ "$CC" == "clang" ]; then
