@@ -555,13 +555,13 @@ function patch_kernel() {
 # Enable ccache to speed up compilation
 function enable_ccache() {
 	if [ "$CCACHE" = true ]; then
-                if [ ! -z "${CC}" ]; then
+		if [ ! -z "${CC}" ] && [[ ${CC} != ccache* ]]; then
 			CC="ccache $CC"
 		fi
-                if [ ! -z "${CROSS_COMPILE}" ]; then
+                if [ ! -z "${CROSS_COMPILE}" ] && [[ ${CROSS_COMPILE} != ccache* ]]; then
 			export CROSS_COMPILE="ccache ${CROSS_COMPILE}"
 		fi
-                if [ ! -z "${CROSS_COMPILE_ARM32}" ]; then
+                if [ ! -z "${CROSS_COMPILE_ARM32}" ] && [[ ${CROSS_COMPILE_ARM32} != ccache* ]]; then
 			export CROSS_COMPILE_ARM32="ccache ${CROSS_COMPILE_ARM32}"
 		fi
 	        info "~~~~~~~~~~~~~~~~~~"
