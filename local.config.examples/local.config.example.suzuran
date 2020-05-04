@@ -19,12 +19,15 @@ unset LD_LIBRARY_PATH
 unset CLANG_TRIPLE
 unset CC
 
+# Enable ccache to speed up compilation
+CCACHE=true
+
 # GCC 64bit
 ## arm64 cross compiler directory:
-CCD64="${TD}/aarch64-standalone-4.9"
-export CROSS_COMPILE=${CCD64}/bin/aarch64-linux-android-
+CCD64="${TD}/aarch64-linaro-5.5"
+export CROSS_COMPILE=${CCD64}/bin/aarch64-linux-gnu-
 ## Source repository:
-CROSS_COMPILE_SRC="https://images.kali.org/nethunter/toolchains/google_aarch64-standalone-oreo-4.9.tar.xz"
+CROSS_COMPILE_SRC="https://images.kali.org/nethunter/toolchains/linaro-aarch64-5.5.tar.xz"
 CROSS_COMPILE_SRC_TYPE="wget"
 
 # Directory structure on the target device that will contain the modules directory
@@ -34,5 +37,5 @@ MODULE_DIRTREE=""
 MODULES_IN=$BUILD_DIR/modules_out/lib/modules
 
 # Kernel local name
-export LOCALVERSION=-Re4son-1.0
+export LOCALVERSION=-Re4son-1.2
 
