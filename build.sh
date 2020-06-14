@@ -24,13 +24,8 @@ reset='\e[0m'
 ##############################################
 
 
-####################################################################
-# Load configuration:                                              #
-
 # Build directory
 BUILD_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-source ${BUILD_DIR}/config
 
 ##############################################
 # Functions
@@ -555,14 +550,18 @@ function patch_kernel() {
 # Enable ccache to speed up compilation
 function enable_ccache() {
 	if [ "$CCACHE" = true ]; then
-		if [ ! -z "${CC}" ] && [[ ${CC} != ccache* ]]; then
-			CC="ccache $CC"
-		fi
-                if [ ! -z "${CROSS_COMPILE}" ] && [[ ${CROSS_COMPILE} != ccache* ]]; then
-			export CROSS_COMPILE="ccache ${CROSS_COMPILE}"
-		fi
-                if [ ! -z "${CROSS_COMPILE_ARM32}" ] && [[ ${CROSS_COMPILE_ARM32} != ccache* ]]; then
-			export CROSS_COMPILE_ARM32="ccache ${CROSS_COMPILE_ARM32}"
+		if [ "$CC" == "clang" ]; then
+			CC="ccache clang"
+		else
+			if [ ! -z "${CC}" ] && [[ ${CC} != ccache* ]]; then
+				CC="ccache $CC"
+			fi
+        	        if [ ! -z "${CROSS_COMPILE}" ] && [[ ${CROSS_COMPILE} != ccache* ]]; then
+				export CROSS_COMPILE="ccache ${CROSS_COMPILE}"
+			fi
+         		if [ ! -z "${CROSS_COMPILE_ARM32}" ] && [[ ${CROSS_COMPILE_ARM32} != ccache* ]]; then
+				export CROSS_COMPILE_ARM32="ccache ${CROSS_COMPILE_ARM32}"
+			fi
 		fi
 	        info "~~~~~~~~~~~~~~~~~~"
 		info " ccache enabled"
@@ -575,7 +574,6 @@ function enable_ccache() {
 function make_kernel() {
 	local cc
 	local confdir=${KDIR}/arch/$ARCH/configs
-	enable_ccache
 	printf "\n"
         # CC=clang cannot be exported. Let's compile with clang if "CC" is set to "clang" in the config
 	if [ "$CC" == "clang" ]; then
@@ -587,18 +585,41 @@ function make_kernel() {
 			make -C $KDIR O="$KERNEL_OUT" $cc $CONFIG $CONFIG_TOOL 
 		fi
 	fi
+	enable_ccache
+	echo ${CC}
+	echo ${CROSS_COMPILE}
+	echo ${CROSS_COMPILE_ARM32}
 	info "~~~~~~~~~~~~~~~~~~"
 	info " Building kernel"
 	info "~~~~~~~~~~~~~~~~~~"
 	copy_version
+	grep "CONFIG_MODULES=y" ${KERNEL_OUT}/.config >/dev/null && MODULES=true
 	## Some kernel sources do not compile into a separate $OUT directory so we set $OUT = $ KDIR
 	## This works with clean and config targets but not for a build, we'll catch this here
 	if [ "$KDIR" == "$KERNEL_OUT" ]; then
-		time make -C $KDIR $cc  -j "$THREADS" ${MAKE_ARGS}
-		time make -C $KDIR $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+		if [ "$CC" == "ccache clang" ]; then
+			time make -C $KDIR CC="ccache clang"  -j "$THREADS" ${MAKE_ARGS}
+			if [ "$MODULES" = true ]; then
+		    		time make -C $KDIR CC="ccache clang" -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+			fi
+		else
+			time make -C $KDIR $cc -j "$THREADS" ${MAKE_ARGS}
+			if [ "$MODULES" = true ]; then
+		    		time make -C $KDIR $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+			fi
+		fi
 	else
-		time make -C $KDIR O="$KERNEL_OUT" $cc  -j "$THREADS" ${MAKE_ARGS}
-		time make -C $KDIR O="$KERNEL_OUT" $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+		if [ "$CC" == "ccache clang" ]; then
+			time make -C $KDIR O="$KERNEL_OUT" CC="ccache clang" -j "$THREADS" ${MAKE_ARGS}
+			if [ "$MODULES" = true ]; then
+		    		time make -C $KDIR O="$KERNEL_OUT" CC="ccache clang" -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+			fi
+		else
+			time make -C $KDIR O="$KERNEL_OUT" $cc -j "$THREADS" ${MAKE_ARGS}
+			if [ "$MODULES" = true ]; then
+		    		time make -C $KDIR O="$KERNEL_OUT" $cc -j "$THREADS" INSTALL_MOD_PATH=$MODULES_OUT modules_install
+			fi
+		fi
 	fi
 	rm -f ${MODULES_OUT}/lib/modules/*/source
 	rm -f ${MODULES_OUT}/lib/modules/*/build
@@ -876,6 +897,10 @@ while true
 do
 	unset cfg_done
 	clear
+	####################################################################
+	# Load configuration:                                              #
+	source ${BUILD_DIR}/config
+
 	show_menu
 	read_choice
 done
