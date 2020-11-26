@@ -1,0 +1,23 @@
+From 97f8e5132732acbff4ad5495c3762e0d80215edf Mon Sep 17 00:00:00 2001
+From: yesimxev <yesimxev@github.com>
+Date: Sat, 29 Jun 2019 02:07:12 +0200
+Subject: [PATCH] Patched SCO driver to make carwhisperer work
+
+---
+ net/bluetooth/sco.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/net/bluetooth/sco.c b/net/bluetooth/sco.c
+index d214aa4a876..3170190f83c 100644
+--- a/net/bluetooth/sco.c
++++ b/net/bluetooth/sco.c
+@@ -499,9 +499,6 @@ static int sco_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
+ 	if (!addr || addr->sa_family != AF_BLUETOOTH)
+ 		return -EINVAL;
+ 
+-	if (alen < sizeof(struct sockaddr_sco))
+-		return -EINVAL;
+-
+ 	memset(&sa, 0, sizeof(sa));
+ 	len = min_t(unsigned int, sizeof(sa), alen);
+ 	memcpy(&sa, addr, len);
