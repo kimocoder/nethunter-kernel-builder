@@ -1,0 +1,33 @@
+From ce2ad05ce3cf325cc0e45d80bbadb1528306c0a7 Mon Sep 17 00:00:00 2001
+From: yesimxev <yesimxev@github.com>
+Date: Sat, 29 Jun 2019 02:08:59 +0200
+Subject: [PATCH] Patching btusb to be compilable
+
+---
+ drivers/bluetooth/btusb.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index f32f788df52..e0197c41d69 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -37,13 +37,13 @@
+ 
+ #define VERSION "0.6"
+ 
+-static int ignore_dga;
+-static int ignore_csr;
+-static int ignore_sniffer;
+-static int disable_scofix;
+-static int force_scofix;
++static bool ignore_dga;
++static bool ignore_csr;
++static bool ignore_sniffer;
++static bool disable_scofix;
++static bool force_scofix;
+ 
+-static int reset = 1;
++static bool reset = true;
+ 
+ static struct usb_driver btusb_driver;
+ 
