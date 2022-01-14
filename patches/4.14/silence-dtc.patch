@@ -1,0 +1,23 @@
+From 3560b52c7f90a6a4cbc493dcee7039d0b25ff291 Mon Sep 17 00:00:00 2001
+From: kimocoder <christian@aircrack-ng.org>
+Date: Wed, 12 Jan 2022 22:17:41 +0100
+Subject: [PATCH] Silence DTC
+
+---
+ scripts/dtc/dtc.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/scripts/dtc/dtc.c b/scripts/dtc/dtc.c
+index c36994e6eac5..f77467e5ee21 100644
+--- a/scripts/dtc/dtc.c
++++ b/scripts/dtc/dtc.c
+@@ -266,6 +266,9 @@ int main(int argc, char *argv[])
+ 			usage("unknown option");
+ 		}
+ 	}
++#if 1
++	if (!quiet) quiet++;
++#endif
+ 
+ 	if (argc > (optind+1))
+ 		usage("missing files");

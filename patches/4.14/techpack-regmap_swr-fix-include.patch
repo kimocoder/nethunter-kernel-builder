@@ -1,0 +1,22 @@
+From e90ad080d28611e9d1a9bc9686020cece6afb30a Mon Sep 17 00:00:00 2001
+From: kimocoder <christian@aircrack-ng.org>
+Date: Wed, 12 Jan 2022 22:19:55 +0100
+Subject: [PATCH] techpack: soc: regmap-swr.c: Fix include
+
+---
+ techpack/audio/soc/regmap-swr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/techpack/audio/soc/regmap-swr.c b/techpack/audio/soc/regmap-swr.c
+index ba092a2aaa70..02b824b81f09 100644
+--- a/techpack/audio/soc/regmap-swr.c
++++ b/techpack/audio/soc/regmap-swr.c
+@@ -18,7 +18,7 @@
+ #include <linux/module.h>
+ #include <linux/init.h>
+ #include <soc/soundwire.h>
+-#include <soc/internal.h>
++#include "soc/internal.h"
+ 
+ 
+ static int regmap_swr_gather_write(void *context,

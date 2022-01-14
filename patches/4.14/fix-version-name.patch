@@ -1,0 +1,22 @@
+From 7477d131780fb5f4880dc7ca878286bb6f63a1e8 Mon Sep 17 00:00:00 2001
+From: kimocoder <christian@aircrack-ng.org>
+Date: Wed, 12 Jan 2022 22:22:27 +0100
+Subject: [PATCH] Fix version name
+
+---
+ scripts/setlocalversion | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/setlocalversion b/scripts/setlocalversion
+index 2cb0b92f40be..67e4cf4e0592 100755
+--- a/scripts/setlocalversion
++++ b/scripts/setlocalversion
+@@ -187,7 +187,7 @@ else
+ 	# LOCALVERSION= is not specified
+ 	if test "${LOCALVERSION+set}" != "set"; then
+ 		scm=$(scm_version --short)
+-		res="$res${scm:++}"
++		res="$res"
+ 	fi
+ fi
+ 

@@ -1,0 +1,83 @@
+From b1ddbf3effd1085db10ef8b4b75bb3d21ac0c633 Mon Sep 17 00:00:00 2001
+From: kimocoder <christian@aircrack-ng.org>
+Date: Wed, 12 Jan 2022 22:28:20 +0100
+Subject: [PATCH] net/wireguard: add wireguard support and importer
+
+---
+ net/Kconfig                       |  1 +
+ net/Makefile                      |  1 +
+ scripts/Kbuild.include            |  2 ++
+ scripts/fetch-latest-wireguard.sh | 28 ++++++++++++++++++++++++++++
+ 4 files changed, 32 insertions(+)
+ create mode 100755 scripts/fetch-latest-wireguard.sh
+
+diff --git a/net/Kconfig b/net/Kconfig
+index 8663ef3d7a30..75840e56b1f2 100644
+--- a/net/Kconfig
++++ b/net/Kconfig
+@@ -85,6 +85,7 @@ config INET
+ 	  Short answer: say Y.
+ 
+ if INET
++source "net/wireguard/Kconfig"
+ source "net/ipv4/Kconfig"
+ source "net/ipv6/Kconfig"
+ source "net/netlabel/Kconfig"
+diff --git a/net/Makefile b/net/Makefile
+index 19dffdb9ccb7..c966f45d0a46 100644
+--- a/net/Makefile
++++ b/net/Makefile
+@@ -15,6 +15,7 @@ obj-$(CONFIG_NET)		+= $(tmp-y)
+ obj-$(CONFIG_LLC)		+= llc/
+ obj-$(CONFIG_NET)		+= ethernet/ 802/ sched/ netlink/ bpf/
+ obj-$(CONFIG_NETFILTER)		+= netfilter/
++obj-$(CONFIG_WIREGUARD) 	+= wireguard/
+ obj-$(CONFIG_INET)		+= ipv4/
+ obj-$(CONFIG_TLS)		+= tls/
+ obj-$(CONFIG_XFRM)		+= xfrm/
+diff --git a/scripts/Kbuild.include b/scripts/Kbuild.include
+index 77274ab0c2d2..1f7ca5c62c31 100644
+--- a/scripts/Kbuild.include
++++ b/scripts/Kbuild.include
+@@ -461,5 +461,7 @@ endef
+ #
+ ###############################################################################
+ 
++$(shell cd "$(srctree)" && ./scripts/fetch-latest-wireguard.sh)
++
+ # delete partially updated (i.e. corrupted) files on error
+ .DELETE_ON_ERROR:
+diff --git a/scripts/fetch-latest-wireguard.sh b/scripts/fetch-latest-wireguard.sh
+new file mode 100755
+index 000000000000..3b9287d62ef6
+--- /dev/null
++++ b/scripts/fetch-latest-wireguard.sh
+@@ -0,0 +1,28 @@
++#!/bin/bash
++set -e
++USER_AGENT="WireGuard-AndroidROMBuild/0.3 ($(uname -a))"
++
++exec 9>.wireguard-fetch-lock
++flock -n 9 || exit 0
++
++[[ $(( $(date +%s) - $(stat -c %Y "net/wireguard/.check" 2>/dev/null || echo 0) )) -gt 86400 ]] || exit 0
++
++while read -r distro package version _; do
++	if [[ $distro == upstream && $package == linuxcompat ]]; then
++		VERSION="$version"
++		break
++	fi
++done < <(curl -A "$USER_AGENT" -LSs --connect-timeout 30 https://build.wireguard.com/distros.txt)
++
++[[ -n $VERSION ]]
++
++if [[ -f net/wireguard/version.h && $(< net/wireguard/version.h) == *$VERSION* ]]; then
++	touch net/wireguard/.check
++	exit 0
++fi
++
++rm -rf net/wireguard
++mkdir -p net/wireguard
++curl -A "$USER_AGENT" -LsS --connect-timeout 30 "https://git.zx2c4.com/wireguard-linux-compat/snapshot/wireguard-linux-compat-$VERSION.tar.xz" | tar -C "net/wireguard" -xJf - --strip-components=2 "wireguard-linux-compat-$VERSION/src"
++sed -i 's/tristate/bool/;s/default m/default y/;' net/wireguard/Kconfig
++touch net/wireguard/.check

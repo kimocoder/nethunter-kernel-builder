@@ -1,0 +1,22 @@
+From fc9ea3c44b8f480ca66086f3966b53cec82c03a5 Mon Sep 17 00:00:00 2001
+From: kimocoder <christian@aircrack-ng.org>
+Date: Wed, 12 Jan 2022 22:23:44 +0100
+Subject: [PATCH] zram: use lz4 compression
+
+---
+ drivers/block/zram/zram_drv.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index ba7f833e64ad..fca0b01fde25 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -41,7 +41,7 @@ static DEFINE_IDR(zram_index_idr);
+ static DEFINE_MUTEX(zram_index_mutex);
+ 
+ static int zram_major;
+-static const char *default_compressor = "lzo";
++static const char *default_compressor = "lz4";
+ 
+ /* Module params (documentation at end) */
+ static unsigned int num_devices = 1;
